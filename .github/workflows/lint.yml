@@ -1,0 +1,27 @@
+name: lint
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  ruff:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      # Installs uv (package manager) and adds it to PATH
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+
+      # Install the pre-commit CLI tool via uv's tool manager
+      - name: Install pre-commit
+        run: uv tool install pre-commit
+
+      # Run all hooks (ruff --fix etc.) but **do not** commit fixes in CI
+      - name: Run pre-commit (all files)
+        run: pre-commit run --all-files --show-diff-on-failure

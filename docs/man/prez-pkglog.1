@@ -1,0 +1,66 @@
+.TH prez-pkglog 1 "July 2025" "prez-pkglog 0.1.0" "Prez Package Logger Manual"
+
+.SH NAME
+prez-pkglog \- A cross-platform package installation logger.
+
+.SH SYNOPSIS
+.B prez-pkglog
+.RB [ command ]
+.RB [ options ]
+
+.SH DESCRIPTION
+.B prez-pkglog
+is a tool designed to log and track package installations, removals, and downloaded files across various package managers (e.g., DNF, APT, Pacman) and platforms. It ensures transparency in system package management and helps users keep their systems organized.
+
+.SH COMMANDS
+.TP
+.B start
+Start the package logging process as a background service.
+.TP
+.B stop
+Stop the package logging background service.
+.TP
+.B daemon
+Run the package logger daemon in the foreground for testing or debugging.
+
+.SH OPTIONS
+.TP
+.B \-h, \-\-help
+Display this help message and exit.
+.TP
+.B \-v, \-\-version
+Show the current version of prez-pkglog.
+
+.SH USAGE EXAMPLES
+.TP
+Start the package logging service:
+.RS
+.B sudo systemctl start prez-pkglog
+.RE
+
+.TP
+Stop the package logging service:
+.RS
+.B sudo systemctl stop prez-pkglog
+.RE
+
+.TP
+Run the daemon manually for testing:
+.RS
+.B prez-pkglog daemon
+.RE
+
+.SH FILES
+.TP
+.I /etc/dnf/plugins/prez_pkglogger.conf
+The configuration file for the DNF plugin.
+
+.SH AUTHOR
+Prez <154857421+P-R-E-Z@users.noreply.github.com>
+
+.SH BUGS
+Please report bugs at:
+.I https://github.com/P-R-E-Z/prez-pkglog/issues
+
+.SH COPYRIGHT
+This is free software, licensed under the MIT License. See the LICENSE file for details.

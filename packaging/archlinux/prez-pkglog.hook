@@ -1,0 +1,11 @@
+[Trigger]
+Operation = Install
+Operation = Remove
+Type = Package
+Target = *
+
+[Action]
+Description = Logging package operations with prez-pkglog
+When = PostTransaction
+Exec = /usr/share/prez-pkglog/hooks/pacman
+NeedsTargets

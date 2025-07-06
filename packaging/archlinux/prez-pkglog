@@ -1,0 +1,39 @@
+#!/usr/bin/env python3
+# Hook for Pacman package manager
+
+import os
+import subprocess
+import sys
+
+
+def main():
+    # Get the operation type from the environment
+    operation = os.getenv("TRANSACTION_CMD", "")
+    if not operation:
+        return 1
+
+    # Get the package names
+    targets = os.getenv("TARGET_PKGS", "").split()
+    if not targets:
+        return 0
+
+    # Map pacman operations to actions
+    action_map = {
+        "install": "install",
+        "upgrade": "upgrade",
+        "remove": "remove",
+    }
+
+    action = action_map.get(operation)
+    if not action:
+        return 0
+
+    # Log each package operation
+    for pkg in targets:
+        subprocess.run(["prez-pkglog", action, pkg, "pacman"], check=False)
+
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -1,0 +1,31 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info/
+
+# Virtual environments
+.venv
+env/
+venv/
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+
+# System files
+.DS_Store
+Thumbs.db
+
+# RPM build dirs
+rpmbuild/
+
+# Logs & Runtime data
+*.log
+*.pid
+*.pid.lock
+*.json
+*.toml
