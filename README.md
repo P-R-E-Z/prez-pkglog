@@ -109,12 +109,3 @@ sudo dnf install ~/rpmbuild/RPMS/noarch/prez-pkglog-0.1.0-1.fc42.noarch.rpm
 MIT License (see LICENSE)
 
 ---
-
-## `prez-pkglog.spec` (key info only)
-
-```specfile
-%global
-%global
-
-%package
-%p
