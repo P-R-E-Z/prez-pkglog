@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass, asdict
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Literal, TypedDict
 
@@ -23,10 +23,10 @@ class PkgEvent:
     summary: str
     scope: Scope
     location: Path
-    when: datetime = datetime.utcnow()
+    when: datetime = datetime.now(timezone.utc)
 
     def to_dict(self) -> PkgEventDict:
         d = asdict(self)
         d["when"] = self.when.isoformat(timespec="seconds") + "Z"
         d["location"] = str(self.location)
-        return d
+        return d  # type: ignore

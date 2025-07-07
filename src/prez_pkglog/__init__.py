@@ -3,18 +3,15 @@
 from __future__ import annotations
 
 import importlib.metadata
-from typing import TypeVar, Any
+from typing import Any
 
-from .package_backend import PackageBackend
-
-# Type variable for package backends
-T = TypeVar("T", bound=PackageBackend)
+from .backends.base import PackageBackend
 
 # Dictionary to store registered backends
-_BACKENDS: dict[str, type[T]] = {}
+_BACKENDS: dict[str, type[PackageBackend]] = {}
 
 
-def register_backend(name: str, backend_class: type[T]) -> None:
+def register_backend(name: str, backend_class: type[PackageBackend]) -> None:
     """Register a new package manager backend
 
     Args:
@@ -33,7 +30,7 @@ def get_backend(name: str | None = None) -> PackageBackend | None:
     Returns:
         PackageBackend instance or None if not found/available
     """
-    if backend_class := _BACKENDS.get(name.lower()):
+    if name and (backend_class := _BACKENDS.get(name.lower())):
         return backend_class()
     return None
 
@@ -65,3 +62,8 @@ except importlib.metadata.PackageNotFoundError:
 # Import built-in backends to register them
 # These imports are at the bottom to avoid circular imports
 from . import backends  # noqa: F401, E402
+
+# Register built-in backends
+from .backends.dnf import DnfBackend  # noqa: E402
+
+register_backend(DnfBackend.name, DnfBackend)

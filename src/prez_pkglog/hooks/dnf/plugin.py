@@ -19,12 +19,7 @@ class PkgLogger(dnf.Plugin):
     name = PLUGIN_NAME
 
     def __init__(self, base: dnf.Base, cli: Optional[dnf.cli.Cli] = None) -> None:
-        """Initialize the plugin
-
-        Args:
-            base: DNF base object
-            cli: Optional DNF CLI object
-        """
+        """Initialize the plugin"""
         super().__init__(base, cli)
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self._load_config()
@@ -32,26 +27,26 @@ class PkgLogger(dnf.Plugin):
     def _load_config(self) -> None:
         """Load the plugin configuration"""
         self.command = DEFAULT_COMMAND
+        self.scope = "user"  # Default to user scope
+
         if CONFIG_PATH.exists():
             try:
-                # Config parsing logic goes here
+                with open(CONFIG_PATH) as f:
+                    for line in f:
+                        if line.startswith("scope"):
+                            self.scope = line.split("=")[1].strip()
                 self.logger.info(f"Loaded config from {CONFIG_PATH}")
             except Exception as e:
                 self.logger.error(f"Error loading config: {e}")
 
     def _log_packages(self, packages: List[dnf.package.Package], action: str) -> None:
-        """Log packages to prez-pkglog
-
-        Args:
-            packages: List of packages to log
-            action: Action to perform on the packages (install/remove)
-        """
+        """Log packages to prez-pkglog"""
         if not packages:
             return
 
         for pkg in packages:
             try:
-                cmd = [self.command, action, pkg.name, "dnf"]
+                cmd = [self.command, action, pkg.name, "dnf", "--scope", self.scope]
                 result = subprocess.run(
                     cmd, capture_output=True, text=True, check=False
                 )
@@ -77,10 +72,4 @@ class PkgLogger(dnf.Plugin):
 
 
 # Enable with: echo 'enabled=1' | sudo tee /etc/dnf/plugins/prez_pkglogger.conf
-
-
-def version(param):
-    pass
-
-
-# Enable with: echo 'enabled=1' | sudo tee /etc/dnf/plugins/prez_pkglogger.conf
+# Add scope: echo 'scope=system' | sudo tee -a /etc/dnf/plugins/prez_pkglogger.conf

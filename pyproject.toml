@@ -47,4 +47,4 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project.scripts]
-prez-pkglog = "prez_pkglog.cli:app"
+prez-pkglog = "prez_pkglog.cli:cli"

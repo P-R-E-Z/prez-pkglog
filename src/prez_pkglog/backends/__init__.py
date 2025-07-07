@@ -6,7 +6,9 @@ from __future__ import annotations
 from .dnf import DnfBackend  # noqa: F401
 
 # Re-export the base backend for easier imports
-from ..package_backend import PackageBackend
+from .base import PackageBackend
+
+# Backends will be registered in the main __init__.py
 
 __all__ = [
     "PackageBackend",

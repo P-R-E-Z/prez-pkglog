@@ -1,168 +1,93 @@
-"""Utility functions for cross-platform support"""
+"""Utility functions for performance monitoring and optimization"""
 
-import os
-import shutil
-import sys
-from pathlib import Path
-from typing import List, Set, Union
+import time
+import functools
+import logging
+from typing import Any, Callable, TypeVar
 
+logger = logging.getLogger(__name__)
 
-def get_platform() -> str:
-    """Get the current platform identifier
-
-    Returns:
-        str: The platform identifier (e.g., 'linux', 'windows', 'darwin', etc.)
-    """
-    return sys.platform.lower()
+F = TypeVar("F", bound=Callable[..., Any])
 
 
-def is_windows() -> bool:
-    """Check if the current platform is Windows
+def performance_monitor(func: F) -> Callable[..., Any]:
+    """Decorator to monitor function performance"""
 
-    Returns:
-        bool: True if the platform is Windows, False otherwise
-    """
-    return get_platform() == "win32"
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        start_time = time.perf_counter()
+        try:
+            result = func(*args, **kwargs)
+            return result
+        finally:
+            end_time = time.perf_counter()
+            duration = end_time - start_time
+            logger.debug(f"{func.__name__} took {duration:.4f} seconds")
 
-
-def is_linux() -> bool:
-    """Check if the current platform is Linux
-
-    Returns:
-        bool: True if the platform is Linux, False otherwise
-    """
-    return get_platform() == "linux"
-
-
-def is_macos() -> bool:
-    """Check if the current platform is macOS
-
-    Returns:
-        bool: True if the platform is macOS, False otherwise
-    """
-    return get_platform() == "darwin"
+    return wrapper
 
 
-def is_wsl() -> bool:
-    """Check if the current platform is WSL
+def cache_result(max_size: int = 128):
+    """Simple LRU cache decorator for expensive operations"""
 
-    Returns:
-        bool: True if the platform is WSL, False otherwise
-    """
-    return get_platform() == "linux" and shutil.which("wslpath")
+    def decorator(func: F) -> Callable[..., Any]:
+        cache: dict[str, Any] = {}
+        cache_keys: list[str] = []
 
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            # Create cache key from arguments
+            key = str((args, tuple(sorted(kwargs.items()))))
 
-def get_downloads_dir() -> List[Path]:
-    """Get the list of directories to search for downloads
+            if key in cache:
+                return cache[key]
 
-    Returns:
-        List[Path]: List of directories to search for downloads
-    """
-    home = Path.home()
-    if is_windows():
-        # On Windows, check both the default Downloads folder and OneDrive if it exists
-        dirs = [
-            home / "Downloads",
-            home / "OneDrive" / "Downloads",
-        ]
-    elif is_macos():
-        # I don't know MacOS so let me know if this works
-        dirs = [
-            home / "Downloads",
-        ]
-    elif is_wsl():
-        # Same thing as MacOS... Let me know if this works lol
-        dirs = [
-            home / "Downloads",
-            home / "OneDrive" / "Downloads",
-        ]
-    else:  # Linux and other Unix systems
-        # Check XDG_DOWNLOAD_DIR first, then fall back to ~/Downloads
-        xdg_download = os.environ.get("XDG_DOWNLOAD_DIR")
-        dirs = [
-            Path(xdg_download) if xdg_download else None,
-            home / "Downloads",
-        ]
+            # Call function and cache result
+            result = func(*args, **kwargs)
 
-    # Filter out None values and non-existent directories
-    return [d for d in dirs if d and d.exists()]
+            # Implement simple LRU
+            if len(cache) >= max_size:
+                # Remove oldest entry
+                oldest_key = cache_keys.pop(0)
+                del cache[oldest_key]
+
+            cache[key] = result
+            cache_keys.append(key)
+
+            return result
+
+        return wrapper
+
+    return decorator
 
 
-def get_package_managers() -> Set[str]:
-    """Detect available package managers on the system
+class PerformanceTracker:
+    """Context manager for tracking performance of code blocks"""
 
-    Returns:
-        Set[str]: Set of available package manager commands
-    """
-    managers = set()
+    def __init__(self, name: str):
+        self.name = name
+        self.start_time = None
 
-    # Common package managers
-    common_managers = [
-        "apt",  # Linux
-        "apt-get",
-        "dnf",
-        "yum",
-        "zypper",
-        "pacman",  # Arch Linux
-        "yay",
-        "paru",
-        "pamac",
-        "brew",  # macOS
-        "port",
-        "choco",  # Windows
-        "scoop",
-        "winget",
-        "snap",  # Cross-platform
-        "flatpak",
-        "nix-env",
-    ]
+    def __enter__(self):
+        self.start_time = time.perf_counter()
+        return self
 
-    for manager in common_managers:
-        if shutil.which(manager):
-            managers.add(manager)
-
-    return managers
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.start_time is not None:
+            duration = time.perf_counter() - self.start_time
+            logger.debug(f"{self.name} took {duration:.4f} seconds")
 
 
-def normalize_path(path: Union[str, Path]) -> Path:
-    """Normalize a path, expanding user and resolving to absolute path
+def optimize_file_operations(file_path: str, operation: Callable[[], Any]) -> Any:
+    """Optimize file operations with error handling and retries"""
+    max_retries = 3
+    retry_delay = 0.1
 
-    Args:
-        path: Path to normalize (string or Path object)
-
-    Returns:
-        Path: Normalized Path object
-    """
-    path = Path(path).expanduser().absolute()
-    try:
-        return path.resolve()
-    except (OSError, RuntimeError):
-        # If the path doesn't exist, return the original path
-        return path
-
-
-def ensure_directory(path: Union[str, Path]) -> None:
-    """Ensure that a directory exists at the given path, creating it if necessary
-
-    Args:
-        path: Path to directory to ensure (string or Path object)
-
-    Returns:
-        Path: Path to the directory
-    """
-    path = normalize_path(path)
-    path.mkdir(parents=True, exist_ok=True)
-    return path
-
-
-def get_file_checksum(file_path: Union[str, Path], algorith: str = "sha256") -> str:
-    """Get the checksum of a file using the specified algorithm
-
-    Args:
-        file_path: Path to the file to get the checksum of (string or Path object)
-        algorithm: Hash algorithm to use for checksum (default is 'sha256')
-
-    Returns:
-        str: Hexadecimal checksum of the file's hash
-        :param algorith:
-    """
+    for attempt in range(max_retries):
+        try:
+            return operation()
+        except (OSError, IOError) as e:
+            if attempt == max_retries - 1:
+                logger.error(f"Failed to perform operation on {file_path}: {e}")
+                raise
+            time.sleep(retry_delay * (2**attempt))  # Exponential backoff

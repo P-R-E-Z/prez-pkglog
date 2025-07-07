@@ -6,17 +6,16 @@ import logging
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Any, ClassVar, final
+from typing import Any, ClassVar, final, Optional
 
-from .. import register_backend
-from ..package_backend import PackageInfo
+from .base import PackageBackend, PackageInfo
 
 # Configure logging
 logger = logging.getLogger(__name__)
 
 
 @final
-class DnfBackend:
+class DnfBackend(PackageBackend):
     """Backend for logging dnf package transactions"""
 
     name: ClassVar[str] = "dnf"
@@ -30,6 +29,7 @@ class DnfBackend:
         super().__init__(config)
         self.dnf_path = shutil.which("dnf") or "/usr/bin/dnf"
         self.enabled = self._check_availability()
+        self.logger: Optional[Any] = None  # Will be set by the main logger
 
     @classmethod
     def is_available(cls) -> bool:
@@ -72,20 +72,23 @@ class DnfBackend:
                 capture_output=True,
                 text=True,
                 check=True,
+                timeout=30,  # Add timeout to prevent hanging
             )
 
             packages: dict[str, PackageInfo] = {}
+
+            # Use more efficient line processing
             for line in result.stdout.splitlines():
-                if not line.strip():
+                line = line.strip()
+                if not line:
                     continue
 
                 parts = line.split()
                 if len(parts) == 3:
-                    name = parts[0]
-                    version_release = parts[1]
-                    architecture = parts[2]
+                    name, version_release, architecture = parts
 
-                    version, *_ = version_release.split("-")
+                    # More efficient version parsing
+                    version = version_release.split("-", 1)[0]
 
                     packages[name] = PackageInfo(
                         name=name,
@@ -96,6 +99,9 @@ class DnfBackend:
 
             return packages
 
+        except subprocess.TimeoutExpired:
+            logger.error("DNF command timed out")
+            return {}
         except (subprocess.SubprocessError, OSError) as e:
             logger.error(f"Failed to get installed packages: {e}")
             return {}
@@ -141,18 +147,18 @@ class DnfBackend:
             release = getattr(pkg, "release", "")
             full_version = f"{version}-{release}" if version and release else version
 
-            self.logger.log_package(
-                name=name,
-                manager=self.name,
-                action="install",
-                version=full_version,
-                source=getattr(pkg, "sourcerpm", None),
-                metadata={
-                    "arch": getattr(pkg, "arch", None),
-                    "repo": getattr(getattr(pkg, "repo", {}), "name", None),
-                    "epoch": getattr(pkg, "epoch", None),
-                },
-            )
+            if self.logger:
+                self.logger.log_package(
+                    name=name,
+                    manager=self.name,
+                    action="install",
+                    version=full_version,
+                    metadata={
+                        "arch": getattr(pkg, "arch", None),
+                        "repo": getattr(getattr(pkg, "repo", {}), "name", None),
+                        "epoch": getattr(pkg, "epoch", None),
+                    },
+                )
             return True
 
         except Exception as e:
@@ -176,17 +182,18 @@ class DnfBackend:
             release = getattr(pkg, "release", "")
             full_version = f"{version}--{release}" if version and release else version
 
-            self.logger.log_package(
-                name=name,
-                manager=self.name,
-                action="remove",
-                version=full_version,
-                metadata={
-                    "arch": getattr(pkg, "arch", None),
-                    "repo": getattr(getattr(pkg, "repo", {}), "name", None),
-                    "epoch": getattr(pkg, "epoch", None),
-                },
-            )
+            if self.logger:
+                self.logger.log_package(
+                    name=name,
+                    manager=self.name,
+                    action="remove",
+                    version=full_version,
+                    metadata={
+                        "arch": getattr(pkg, "arch", None),
+                        "repo": getattr(getattr(pkg, "repo", {}), "name", None),
+                        "epoch": getattr(pkg, "epoch", None),
+                    },
+                )
             return True
 
         except Exception as e:
@@ -196,4 +203,4 @@ class DnfBackend:
             return False
 
 
-register_backend(DnfBackend.name, DnfBackend)
+# Registration will be handled by __init__.py
