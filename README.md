@@ -21,7 +21,7 @@
 ## Installation
 
 ```bash
-git clone
+git clone https://github.com/P-R-E-Z/prez-pkglog.git
 chomd +x prez-pkglog
 ```
 
