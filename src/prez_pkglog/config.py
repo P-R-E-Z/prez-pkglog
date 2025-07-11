@@ -19,6 +19,7 @@ class Config:
             "enable_download_monitoring": True,
             "downloads_dir": str(Path.home() / "Downloads"),
             "log_format": "both",  # json, toml, or both
+            "monitored_extensions": ".rpm, .deb, .pkg, .exe, .msi, .dmg",
         }
 
         # Cache for computed properties

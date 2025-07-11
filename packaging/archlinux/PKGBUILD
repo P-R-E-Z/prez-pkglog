@@ -1,0 +1,27 @@
+# Maintainer: Prez <154857421+P-R-E-Z@users.noreply.github.com>
+pkgname=prez-pkglog
+pkgver=0.5.0
+pkgrel=1
+pkgdesc="Cross-platform package installation logger"
+arch=('any')
+url="https://github.com/P-R-E-Z/prez-pkglog"
+license=('MIT')
+depends=('python' 'python-pydantic' 'python-rich' 'python-typer' 'python-watchdog' 'python-appdirs' 'python-toml')
+makedepends=('python-build' 'python-installer' 'python-setuptools' 'python-wheel')
+source=("$pkgname-$pkgver.tar.gz::$url/archive/v$pkgver.tar.gz")
+sha256sums=('SKIP')
+
+build() {
+    cd "$srcdir/$pkgname-$pkgver"
+    python -m build --wheel --no-isolation
+}
+
+package() {
+    cd "$srcdir/$pkgname-$pkgver"
+    install -D -m0644 "dist/"*.whl "$pkgdir/tmp.whl"
+    python -m installer --destdir="$pkgdir" "$pkgdir/tmp.whl"
+
+    # Install hook
+    install -D -m0755 "packaging/archlinux/prez-pkglog-hook.sh" "$pkgdir/usr/share/prez-pkglog/prez-pkglog-hook.sh"
+    install -D -m0644 "packaging/archlinux/prez-pkglog.hook" "$pkgdir/usr/share/libalpm/hooks/prez-pkglog.hook"
+} 

@@ -4,6 +4,7 @@ import json
 import pathlib
 import sys
 from typing import Dict, Any, Optional
+import logging
 
 try:
     import toml
@@ -11,6 +12,8 @@ except ImportError:
     toml = None
 
 from .config import Config
+
+logger = logging.getLogger(__name__)
 
 
 class PackageLogger:
@@ -68,7 +71,7 @@ class PackageLogger:
         """Log a package action"""
         # Validation check for empty names
         if not name or not name.strip():
-            print(f"Warning: Invalid package name: {name}")
+            logger.warning(f"Warning: Invalid package name: {name}")
             return
 
         entry = {
@@ -106,7 +109,7 @@ class PackageLogger:
             else:
                 self.json_file.write_text(json.dumps(data, indent=2))
         except Exception as e:
-            print(f"Error writing to JSON log file: {e}")
+            logger.error(f"Error writing to JSON log file: {e}")
 
     def _write_json_streaming(self, data: list):
         """Write JSON data using streaming to avoid memory issues"""
@@ -130,7 +133,38 @@ class PackageLogger:
                 f.write(toml.dumps({"package": entry}))
                 f.write("\n")
         except Exception as e:
-            print(f"Error writing to TOML log file: {e}")
+            logger.error(f"Error writing to TOML log file: {e}")
+
+    def query(
+        self,
+        name: Optional[str] = None,
+        manager: Optional[str] = None,
+        since: Optional[dt.date] = None,
+    ) -> list:
+        """Query the package log"""
+        try:
+            data = json.loads(self.json_file.read_text())
+            results = data
+
+            if name:
+                results = [
+                    e for e in results if name.lower() in e.get("name", "").lower()
+                ]
+
+            if manager:
+                results = [e for e in results if e.get("manager") == manager]
+
+            if since:
+                results = [
+                    e
+                    for e in results
+                    if dt.datetime.fromisoformat(e.get("date")).date() >= since
+                ]
+
+            return results
+        except Exception as e:
+            logger.error(f"Error querying log file: {e}")
+            return []
 
     def get_statistics(self) -> Dict[str, Any]:
         """Get statistics from log files"""
@@ -159,16 +193,3 @@ class PackageLogger:
                 "downloads": 0,
                 "scope": self.config.scope,
             }
-
-
-def main():
-    if len(sys.argv) != 4:
-        print("Usage: prez-pkglog <install|remove> <name> <manager>")
-        sys.exit(1)
-    _, action, name, manager = sys.argv
-    logger = PackageLogger()
-    logger.log_package(name, manager, action)
-
-
-if __name__ == "__main__":
-    main()

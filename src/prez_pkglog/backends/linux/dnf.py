@@ -4,9 +4,13 @@ from __future__ import annotations
 
 import logging
 import shutil
-import subprocess
 from pathlib import Path
 from typing import Any, ClassVar, final, Optional
+
+try:
+    import dnf
+except ImportError:
+    dnf = None
 
 from .base import PackageBackend, PackageInfo
 
@@ -28,7 +32,7 @@ class DnfBackend(PackageBackend):
         """
         super().__init__(config)
         self.dnf_path = shutil.which("dnf") or "/usr/bin/dnf"
-        self.enabled = self._check_availability()
+        self.enabled = self.is_available()
         self.logger: Optional[Any] = None  # Will be set by the main logger
 
     @classmethod
@@ -38,6 +42,8 @@ class DnfBackend(PackageBackend):
         Returns:
             True if DNF is available, False otherwise
         """
+        if dnf is None:
+            return False
         return bool(shutil.which("dnf") or Path("/usr/bin/dnf").exists())
 
     def _check_availability(self) -> bool:
@@ -60,51 +66,24 @@ class DnfBackend(PackageBackend):
         if not self.enabled:
             return {}
 
+        packages: dict[str, PackageInfo] = {}
         try:
-            result = subprocess.run(
-                [
-                    self.dnf_path,
-                    "repoquery",
-                    "--installed",
-                    "--queryformat",
-                    "%{name} %{version}-%{release} %{arch}",
-                ],
-                capture_output=True,
-                text=True,
-                check=True,
-                timeout=30,  # Add timeout to prevent hanging
-            )
-
-            packages: dict[str, PackageInfo] = {}
-
-            # Use more efficient line processing
-            for line in result.stdout.splitlines():
-                line = line.strip()
-                if not line:
-                    continue
-
-                parts = line.split()
-                if len(parts) == 3:
-                    name, version_release, architecture = parts
-
-                    # More efficient version parsing
-                    version = version_release.split("-", 1)[0]
-
-                    packages[name] = PackageInfo(
-                        name=name,
-                        version=version,
-                        architecture=architecture,
+            with dnf.Base() as base:
+                base.fill_sack()
+                q = base.sack.query().installed()
+                for pkg in q:
+                    packages[pkg.name] = PackageInfo(
+                        name=pkg.name,
+                        version=pkg.version,
+                        architecture=pkg.arch,
                         installed=True,
+                        source=pkg.reponame,
                     )
-
-            return packages
-
-        except subprocess.TimeoutExpired:
-            logger.error("DNF command timed out")
+        except Exception as e:
+            logger.error(f"Failed to get installed packages using dnf API: {e}")
             return {}
-        except (subprocess.SubprocessError, OSError) as e:
-            logger.error(f"Failed to get installed packages: {e}")
-            return {}
+
+        return packages
 
     def register_transaction(self, transaction: Any) -> bool:
         """Register a DNF transaction for logging
@@ -155,7 +134,7 @@ class DnfBackend(PackageBackend):
                     version=full_version,
                     metadata={
                         "arch": getattr(pkg, "arch", None),
-                        "repo": getattr(getattr(pkg, "repo", {}), "name", None),
+                        "repo": getattr(pkg, "reponame", None),
                         "epoch": getattr(pkg, "epoch", None),
                     },
                 )
@@ -180,7 +159,7 @@ class DnfBackend(PackageBackend):
             name = getattr(pkg, "name", "")
             version = getattr(pkg, "version", "")
             release = getattr(pkg, "release", "")
-            full_version = f"{version}--{release}" if version and release else version
+            full_version = f"{version}-{release}" if version and release else version
 
             if self.logger:
                 self.logger.log_package(
@@ -190,7 +169,7 @@ class DnfBackend(PackageBackend):
                     version=full_version,
                     metadata={
                         "arch": getattr(pkg, "arch", None),
-                        "repo": getattr(getattr(pkg, "repo", {}), "name", None),
+                        "repo": getattr(pkg, "reponame", None),
                         "epoch": getattr(pkg, "epoch", None),
                     },
                 )

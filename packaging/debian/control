@@ -1,0 +1,15 @@
+Source: prez-pkglog
+Maintainer: Prez <154857421+P-R-E-Z@users.noreply.github.com>
+Section: utils
+Priority: optional
+Build-Depends: debhelper-compat (= 13), dh-python, python3-all, python3-setuptools, python3-wheel
+Standards-Version: 4.5.1
+
+Package: prez-pkglog
+Architecture: all
+Depends: ${python3:Depends}, ${misc:Depends}
+Description: Cross-platform package installation logger
+ A cross-distro/platform package-activity logger that records every
+ install and removal event on your system, then writes an append-only
+ history in both JSON and TOML. It can also monitor your downloads
+ folder for new files. 

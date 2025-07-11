@@ -1,66 +1,99 @@
-.TH prez-pkglog 1 "July 2025" "prez-pkglog 0.1.0" "Prez Package Logger Manual"
+.TH prez-pkglog 1 "July 2025" "prez-pkglog 0.1.0" "User Commands"
 
 .SH NAME
-prez-pkglog \- A cross-platform package installation logger.
+prez-pkglog \- a local package installation and removal logger
 
 .SH SYNOPSIS
 .B prez-pkglog
-.RB [ command ]
-.RB [ options ]
+[\fIOPTIONS\fR] \fICOMMAND\fR [\fIARGS\fR]...
 
 .SH DESCRIPTION
-.B prez-pkglog
-is a tool designed to log and track package installations, removals, and downloaded files across various package managers (e.g., DNF, APT, Pacman) and platforms. It ensures transparency in system package management and helps users keep their systems organized.
+\fBprez-pkglog\fR is a cross-distro/platform package-activity logger that records every install and removal event on your system. It supports multiple package managers and can monitor a downloads folder, writing an append-only history in both JSON and TOML.
 
 .SH COMMANDS
 .TP
-.B start
-Start the package logging process as a background service.
+.B setup
+Setup configuration and directories for a given scope.
 .TP
-.B stop
-Stop the package logging background service.
+.B status
+Show current status and statistics for a given scope.
 .TP
 .B daemon
-Run the package logger daemon in the foreground for testing or debugging.
+Start the monitoring daemon. For the user scope, this includes download monitoring.
+.TP
+.B export
+Export the package log in the specified format (json or toml).
+.TP
+.B query
+Query the package log with optional filters.
+.TP
+.B install <name> <manager>
+Manually log a package installation.
+.TP
+.B remove <name> <manager>
+Manually log a package removal.
 
 .SH OPTIONS
 .TP
-.B \-h, \-\-help
-Display this help message and exit.
+.B --scope \fI<user|system>\fR
+Set the logging scope. The 'system' scope requires administrative privileges. Defaults to 'user'.
 .TP
-.B \-v, \-\-version
-Show the current version of prez-pkglog.
+.B --format \fI<json|toml>\fR
+(For export) Set the output format. Defaults to 'json'.
+.TP
+.B --name \fI<text>\fR
+(For query) Filter log by package name (case-insensitive contains).
+.TP
+.B --manager \fI<text>\fR
+(For query) Filter log by package manager (e.g., dnf, apt).
+.TP
+.B --days \fI<integer>\fR
+(For query) Filter log to entries within the last N days.
+.TP
+.B -h, --help
+Show a help message for a command and exit.
+.TP
+.B --version
+Show the version and exit.
 
 .SH USAGE EXAMPLES
 .TP
-Start the package logging service:
+Check the status for the current user:
 .RS
-.B sudo systemctl start prez-pkglog
+.B prez-pkglog status --scope user
 .RE
-
 .TP
-Stop the package logging service:
+Export the system-wide log as TOML:
 .RS
-.B sudo systemctl stop prez-pkglog
+.B sudo prez-pkglog export --scope system --format toml
 .RE
-
 .TP
-Run the daemon manually for testing:
+Find all packages with 'nvim' in the name installed in the last 30 days:
 .RS
-.B prez-pkglog daemon
+.B prez-pkglog query --name nvim --days 30
+.RE
+.TP
+Manually log the installation of 'my-app' from a git clone:
+.RS
+.B prez-pkglog install my-app git
 .RE
 
 .SH FILES
 .TP
-.I /etc/dnf/plugins/prez_pkglogger.conf
-The configuration file for the DNF plugin.
+\fB~/.config/prez-pkglog/prez_pkglog.conf\fR
+User-specific configuration file.
+.TP
+\fB/etc/prez-pkglog/prez_pkglog.conf\fR
+System-wide configuration file.
+.TP
+\fB~/.local/share/prez-pkglog/\fR
+Directory for user-specific log files (packages.json, packages.toml).
+.TP
+\fB/var/log/prez-pkglog/\fR
+Directory for system-wide log files.
 
 .SH AUTHOR
 Prez <154857421+P-R-E-Z@users.noreply.github.com>
 
 .SH BUGS
-Please report bugs at:
-.I https://github.com/P-R-E-Z/prez-pkglog/issues
-
-.SH COPYRIGHT
-This is free software, licensed under the MIT License. See the LICENSE file for details.
+Please report bugs at: \fIhttps://github.com/P-R-E-Z/prez-pkglog/issues\fR

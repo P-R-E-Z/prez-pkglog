@@ -1,11 +1,12 @@
 [Trigger]
 Operation = Install
+Operation = Upgrade
 Operation = Remove
 Type = Package
 Target = *
 
 [Action]
-Description = Logging package operations with prez-pkglog
+Description = Logging package operations with prez-pkglog...
 When = PostTransaction
-Exec = /usr/share/prez-pkglog/hooks/pacman
+Exec = /usr/share/prez-pkglog/prez-pkglog-hook.sh
 NeedsTargets

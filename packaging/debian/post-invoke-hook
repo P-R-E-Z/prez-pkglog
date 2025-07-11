@@ -1,0 +1,21 @@
+#!/bin/bash
+#
+# This APT hook for prez-pkglog is a work-in-progress.
+# It is triggered after a dpkg invocation.
+#
+# To implement this, one would typically parse the dpkg log file to
+# determine what was installed or removed.
+#
+# See: /var/log/dpkg.log
+#
+# Example of what needs to be logged:
+# prez-pkglog install <package-name> apt --scope system
+# prez-pkglog remove <package-name> apt --scope system
+
+set -euo pipefail
+
+LOG_FILE="/var/log/dpkg.log"
+
+echo "prez-pkglog apt hook is a work-in-progress and has not logged any packages." >> /tmp/prez-pkglog-apt.log
+
+exit 0

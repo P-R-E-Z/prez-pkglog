@@ -1,13 +1,13 @@
 [Unit]
-Description=Prez Package Logger
+Description=Prez Package Logger (Downloads Monitor)
 Documentation=man:prez-pkglog(1)
-After=network.target
+After=network-online.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/prez-pkglog daemon
+ExecStart=%h/.local/bin/prez-pkglog daemon --scope user
 Restart=on-failure
-RestartSec=5
+RestartSec=10
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target

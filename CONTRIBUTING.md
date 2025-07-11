@@ -66,18 +66,21 @@ pre-commit install
 
 ### Backend Structure
 
-Each backend should inherit from `PackageBackend` and implement the required methods:
+Backends are located in `src/prez_pkglog/backends/` under their respective operating system directory (`linux/`, `macos/`, or `windows/`). For example, the APT backend should be located at `src/prez_pkglog/backends/linux/apt.py`.
+
+Each backend must inherit from `PackageBackend` and implement the required methods. The application will automatically discover and load any valid backend from these directories at runtime.
+
+Here is a generic template for a new backend:
 
 ```python
-# src/prez_pkglog/backends/example.py
+# src/prez_pkglog/backends/linux/example.py
 from __future__ import annotations
 
 import shutil
 import subprocess
 from typing import Any
 
-from .base import PackageBackend, PackageInfo
-from .. import register_backend
+from ..base import PackageBackend, PackageInfo
 
 class ExampleBackend(PackageBackend):
     """Backend for Example package manager"""
@@ -191,22 +194,13 @@ class ExampleBackend(PackageBackend):
             logger.error(f"Error logging package removal {getattr(pkg, 'name', 'unknown')}: {e}")
             return False
 
-# Register the backend
-register_backend(ExampleBackend.name, ExampleBackend)
-```
-
-### Backend Registration
-
-Add your backend to the registration in `src/prez_pkglog/backends/__init__.py`:
-
-```python
-# Import your new backend
-from .example import ExampleBackend  # noqa: F401
+# No registration needed
+# The backend is loaded automatically from its location.
 ```
 
 ### Testing Your Backend
 
-Create tests in `tests/backends/test_example.py`:
+Create tests for your new backend in the corresponding `tests/` directory (e.g., `tests/unit/backends/linux/test_example.py`):
 
 ```python
 import pytest
@@ -258,85 +252,35 @@ class TestExampleBackend:
 
 ## Adding New Platforms
 
+Supporting a new platform or distribution involves two main steps: ensuring the application can detect the platform and providing packaging files.
+
 ### Platform Detection
 
-Add platform-specific utilities in `src/prez_pkglog/utils/platform.py`:
+Platform-specific logic is handled in `src/prez_pkglog/utils/platform.py`. If you are adding a new Linux distribution or operating system, you may need to update the `detect_platform()` function to recognize it.
 
 ```python
-import sys
-import platform
+# src/prez_pkglog/utils/platform.py
 
 def detect_platform() -> str:
     """Detect the current platform"""
     system = platform.system().lower()
-
     if system == "linux":
-        # Detect specific Linux distributions
-        try:
-            with open("/etc/os-release") as f:
-                content = f.read().lower()
-                if "ubuntu" in content or "debian" in content:
-                    return "debian"
-                elif "fedora" in content:
-                    return "fedora"
-                elif "arch" in content:
-                    return "arch"
-                else:
-                    return "linux"
-        except FileNotFoundError:
-            return "linux"
-    elif system == "darwin":
-        return "macos"
-    elif system == "windows":
-        return "windows"
-    else:
-        return "unknown"
-
-def get_platform_specific_paths() -> dict[str, str]:
-    """Get platform-specific file paths"""
-    platform = detect_platform()
-
-    if platform == "fedora":
-        return {
-            "config_dir": "/etc/prez-pkglog",
-            "log_dir": "/var/log/prez-pkglog",
-            "user_config": "~/.config/prez-pkglog",
-            "user_log": "~/.local/share/prez-pkglog"
-        }
-    elif platform == "debian":
-        return {
-            "config_dir": "/etc/prez-pkglog",
-            "log_dir": "/var/log/prez-pkglog",
-            "user_config": "~/.config/prez-pkglog",
-            "user_log": "~/.local/share/prez-pkglog"
-        }
-    # Add more platforms as needed
-
-    return {
-        "config_dir": "/etc/prez-pkglog",
-        "log_dir": "/var/log/prez-pkglog",
-        "user_config": "~/.config/prez-pkglog",
-        "user_log": "~/.local/share/prez-pkglog"
-    }
+        # ... distribution detection logic ...
 ```
 
-### Platform-Specific Configuration
+You may also need to add platform-specific paths in `get_platform_specific_paths()` if they differ from the defaults.
 
-Create platform-specific configuration templates in `config/platforms/`:
+### Packaging
 
-```ini
-# config/platforms/fedora.conf
-[main]
-scope = user
-enable_dnf_hooks = true
-enable_download_monitoring = true
-downloads_dir = ~/Downloads
-log_format = both
+To make it easier for users to install `prez-pkglog` on other systems, I encourage contributions of packaging templates. These should be placed in the `packaging/` directory, in a subdirectory named after the distribution (e.g., `packaging/suse/`).
 
-[dnf]
-enabled = true
-plugin_config = /etc/dnf/plugins/prez_pkglogger.conf
-```
+I have existing examples for Arch Linux (`packaging/archlinux/`) and Debian (`packaging/debian/`) that can be used as a reference. These templates provide a starting point for creating native packages (`.pkg.tar.zst`, `.deb`, etc.) and setting up any necessary hooks for the native package manager.
+
+A good packaging contribution includes:
+
+- All necessary metadata files (`PKGBUILD`, `debian/control`, etc.).
+- A build recipe (`debian/rules`, etc.).
+- Any hooks or scripts needed to integrate with the package manager.
 
 ---
 
@@ -530,24 +474,20 @@ Examples:
 
 ### Version Bumping
 
-Use semantic versioning (MAJOR.MINOR.PATCH):
-
-- **MAJOR**: Breaking changes
-- **MINOR**: New features (backward compatible)
-- **PATCH**: Bug fixes (backward compatible)
+This project uses `bump2version` to manage versioning, which is handled by the `Makefile`.
 
 ### Creating a Release
 
-1. Update version in `prez-pkglog.spec`
-2. Update `CHANGELOG.md`
-3. Create a git tag:
+1. Ensure your `main` branch is clean and up to date.
+2. Update `CHANGELOG.md` with all the changes for the new version. Commit the changes.
+3. Run the release command from the `Makefile`, specifying `patch`, `minor`, or `major`:
+   
+    ```bash
+    make release v=minor
+    ```
 
-   ```bash
-   git tag v1.0.0
-   git push origin v1.0.0
-   ```
-
-4. Create a GitHub release with release notes
+    This command will bump the version number in `pyproject.toml`, create a new commit, tag it, and push the commit and tags to the repository.
+4. Finally, create a new release on GitHub using the new tag, and paste the changelog contents into the description.
 
 ---
 

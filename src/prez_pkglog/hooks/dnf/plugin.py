@@ -1,16 +1,18 @@
 import dnf
-import subprocess
 from pathlib import Path
 import logging
 from typing import List, Optional
+
+from prez_pkglog.config import Config
+from prez_pkglog.logger import PackageLogger
 
 # Configure Logging
 logger = logging.getLogger(__name__)
 
 # Constants
 PLUGIN_NAME = "prez_pkglogger"
-CONFIG_PATH = Path(f"/etc/dnf/plugins/{PLUGIN_NAME}.conf")
-DEFAULT_COMMAND = "prez-pkglog"
+USER_CONFIG_PATH = Path.home() / f".config/dnf/plugins/{PLUGIN_NAME}.conf"
+SYSTEM_CONFIG_PATH = Path(f"/etc/dnf/plugins/{PLUGIN_NAME}.conf")
 
 
 class PkgLogger(dnf.Plugin):
@@ -23,21 +25,28 @@ class PkgLogger(dnf.Plugin):
         super().__init__(base, cli)
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self._load_config()
+        self.pkg_logger = PackageLogger(self.config)
 
     def _load_config(self) -> None:
         """Load the plugin configuration"""
-        self.command = DEFAULT_COMMAND
         self.scope = "user"  # Default to user scope
+        config_path = (
+            SYSTEM_CONFIG_PATH if Path("/etc/dnf/plugins").exists() else USER_CONFIG_PATH
+        )
 
-        if CONFIG_PATH.exists():
+        if config_path.exists():
             try:
-                with open(CONFIG_PATH) as f:
+                with open(config_path) as f:
                     for line in f:
-                        if line.startswith("scope"):
+                        if line.strip().startswith("scope"):
                             self.scope = line.split("=")[1].strip()
-                self.logger.info(f"Loaded config from {CONFIG_PATH}")
+                self.logger.info(f"Loaded config from {config_path}")
             except Exception as e:
                 self.logger.error(f"Error loading config: {e}")
+
+        # Initialize config for PackageLogger
+        self.config = Config()
+        self.config.set("scope", self.scope)
 
     def _log_packages(self, packages: List[dnf.package.Package], action: str) -> None:
         """Log packages to prez-pkglog"""
@@ -46,14 +55,16 @@ class PkgLogger(dnf.Plugin):
 
         for pkg in packages:
             try:
-                cmd = [self.command, action, pkg.name, "dnf", "--scope", self.scope]
-                result = subprocess.run(
-                    cmd, capture_output=True, text=True, check=False
-                )
-                if result.returncode != 0:
-                    self.logger.error(
-                        f"Failed to log {action} for package {pkg.name}: "
-                        f"{result.stderr or 'unknown error'}"
+                self.pkg_logger.log_package(
+                    name=pkg.name,
+                    manager="dnf",
+                    action=action,
+                    version=f"{pkg.version}-{pkg.release}",
+                    metadata={
+                        "arch": pkg.arch,
+                        "repo": pkg.reponame,
+                        "epoch": pkg.epoch,
+                    },
                     )
             except Exception as e:
                 self.logger.error(f"Error logging package {pkg.name}: {e}")
