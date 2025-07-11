@@ -307,7 +307,7 @@ wheels = [
 
 [[package]]
 name = "prez-pkglog"
-version = "0.5.2"
+version = "0.5.0"
 source = { editable = "." }
 dependencies = [
     { name = "appdirs" },
