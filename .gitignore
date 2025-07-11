@@ -11,6 +11,15 @@ wheels/
 env/
 venv/
 
+# Testing & Coverage
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+
+# Type-checking
+.mypy_cache/
+
 # IDEs
 .idea/
 .vscode/
