@@ -38,7 +38,7 @@ mock: srpm
 	mock -r $(MOCKCFG) $(RPMBUILD_DIR)/SRPMS/$(PROJECT)-$(VERSION)-$(RELEASE).src.rpm
 
 install: rpm
-	sudo dnf install -y $(RPMBUILD_DIR)/RPMS/noarch/$(PROJECT)-$(VERSION)-$(RELEASE).noarch.rpm
+	sudo dnf install -y $(RPMBUILD_DIR)/RPMS/noarch/$(PROJECT)-$(VERSION)-*.noarch.rpm
 
 release:
 	@test "$(v)" || (echo "usage: make release v=patch|minor|major" && exit 1)
