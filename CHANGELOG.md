@@ -7,7 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.5.0] - 2025-07-11
 
+### Packaging
+
+- **Fixed** PEP 625 underscore tarball naming in Makefile
+- **Added** MANIFEST.in so LICENSE, docs, systemd unit, default config are shipped
+- **Spec**: %pyproject_wheel, excluded stray __init__.py*, RPM now builds cleanly
+- **Wheel + sdist** now built by default via `make build`
+
 ### Added
+
 - **Query Command**: New `query` command in the CLI to search and filter package logs by name, manager, or date.
 - **Backend Restructuring**: Re-architected the backend system to be OS-specific, with packages now organized under `linux/`, `macos/`, and `windows/` directories for clearer separation and future expansion.
 - **Dynamic Backend Loading**: Implemented dynamic discovery and loading of all available package manager backends at runtime.
@@ -18,4 +26,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Configuration Persistence**: Application settings are now saved to `prez_pkglog.conf` automatically.
 
 ### Changed
+
 - **CLI Refactoring**: The `install` and `remove` commands were moved from a standalone script into the main `

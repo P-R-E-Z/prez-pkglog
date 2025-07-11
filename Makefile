@@ -21,13 +21,14 @@ test:
 build: sdist wheel
 
 sdist:
-	uv run build --sdist
+	uv run python -m build --sdist
 
 wheel:
-	uv run build --wheel
+	uv run python -m build --wheel
 
 srpm: sdist
-	cp dist/$(PROJECT)-$(VERSION).tar.gz $(RPMBUILD_DIR)/SOURCES/
+	mkdir -p $(RPMBUILD_DIR)/SOURCES
+	cp dist/$(subst -,_,${PROJECT})-${VERSION}.tar.gz $(RPMBUILD_DIR)/SOURCES/
 	rpmbuild -bs $(SPEC)
 
 rpm: srpm

@@ -6,11 +6,11 @@ Summary: Cross-platform package installation logger
 
 License:    MIT
 URL:        https://github.com/P-R-E-Z/prez-pkglog
-Source0:    %{name}-%{version}.tar.gz
+Source0:    prez_pkglog-%{version}.tar.gz
 
 BuildArch:  noarch
 
-BuildRequires:  pypyproject-rpm-macros
+BuildRequires:  pyproject-rpm-macros
 
 %global _pyproject_buildrequires_extra python-dnf python-watchdog python-appdirs python-rich python-typer python-pydantic python-dotenv python-toml
 
@@ -19,10 +19,12 @@ Prez-Pkglog is a cross-platform tool to log package installations, downloaded fi
 package managers. This utility is designed to improve system package management.
 
 %prep
-%autosetup -n %{name}-%{version}
+%autosetup -n prez_pkglog-%{version}
+# Convert SPDX string back to table form for older setuptools in system RPM build
+sed -i 's/^license = "MIT"/license = { text = "MIT" }/' pyproject.toml
 
 %build
-%pyproject_build
+%pyproject_wheel
 
 %install
 %pyproject_install
@@ -35,6 +37,8 @@ install -D -m 0644 config/prez_pkglog.conf %{buildroot}%{_sysconfdir}/dnf/plugin
 install -D -m 0644 systemd-user/prez-pkglog.service %{buildroot}%{_userunitdir}/prez-pkglog.service
 
 %files
+%exclude %{python3_sitelib}/__init__.*
+%exclude %{python3_sitelib}/__pycache__/__init__*
 %license LICENSE
 %doc README.md CONTRIBUTING.md
 %{_bindir}/prez-pkglog
@@ -51,5 +55,13 @@ echo "prez-pkglog installed successfully. Refer to the README.md for usage instr
 echo "prez-pkglog uninstalled successfully."
 
 %changelog
+* Fri Jul 11 2025 Prez <154857421+P-R-E-Z@users.noreply.github.com> - 0.5.0-1
+- 0.5.0 upstream release
+- Build using %pyproject_wheel
+- Include docs, systemd unit, default config via MANIFEST.in
+- Exclude top-level __init__ artifacts from package
+- Updated license metadata to SPDX format
+- Numerous test and feature additions; see upstream CHANGELOG.md
+
 * Tue Jul 01 2025 Prez <154857421+P-R-E-Z@users.noreply.github.com> - 0.1.0-1
 - Initial package

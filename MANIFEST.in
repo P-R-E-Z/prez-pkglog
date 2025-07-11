@@ -1,0 +1,6 @@
+include LICENSE
+include README.md
+include CONTRIBUTING.md
+include config/prez_pkglog.conf
+include systemd-user/prez-pkglog.service
+recursive-include docs/man * 
