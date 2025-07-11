@@ -21,9 +21,8 @@
 ## Installation
 
 ```bash
-# one-time enable (Copr)
-sudo dnf copr enable prez/prez-pkglog
-sudo dnf install prez-pkglog
+git clone
+chomd +x prez-pkglog
 ```
 
 See the [Building the RPM yourself](#building-the-rpm-yourself) section for instructions on building from source.
