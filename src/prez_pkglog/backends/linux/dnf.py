@@ -12,7 +12,7 @@ try:
 except ImportError:
     dnf = None
 
-from .base import PackageBackend, PackageInfo
+from ..base import PackageBackend, PackageInfo
 
 # Configure logging
 logger = logging.getLogger(__name__)

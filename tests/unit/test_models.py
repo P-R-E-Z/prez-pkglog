@@ -1,6 +1,5 @@
 """Unit tests for the models module"""
 
-from pathlib import Path
 from datetime import datetime
 
 from src.prez_pkglog.models import PkgEvent
@@ -14,31 +13,32 @@ class TestPkgEvent:
         event = PkgEvent(
             name="test-package",
             version="1.0.0",
-            summary="Test package",
+            manager="dnf",
             scope="user",
-            location=Path("/tmp/test"),
+            repository="fedora",
         )
 
         assert event.name == "test-package"
         assert event.version == "1.0.0"
-        assert event.summary == "Test package"
+        assert event.manager == "dnf"
         assert event.scope == "user"
-        assert str(event.location) == "/tmp/test"
+        assert event.repository == "fedora"
 
     def test_pkg_event_defaults(self):
         """Test PkgEvent with default values."""
         event = PkgEvent(
             name="test-package",
             version="1.0.0",
-            summary="Test package",
+            manager="dnf",
             scope="user",
-            location=Path("/tmp/test"),
+            repository="fedora",
         )
 
         assert event.name == "test-package"
         assert event.version == "1.0.0"
-        assert event.summary == "Test package"
+        assert event.manager == "dnf"
         assert event.scope == "user"
+        assert event.repository == "fedora"
         assert event.when is not None  # Should have default datetime
 
     def test_pkg_event_str_representation(self):
@@ -46,9 +46,9 @@ class TestPkgEvent:
         event = PkgEvent(
             name="test-package",
             version="1.0.0",
-            summary="Test package",
+            manager="dnf",
             scope="user",
-            location=Path("/tmp/test"),
+            repository="fedora",
         )
 
         str_repr = str(event)
@@ -60,9 +60,9 @@ class TestPkgEvent:
         event = PkgEvent(
             name="test-package",
             version="1.0.0",
-            summary="Test package",
+            manager="dnf",
             scope="user",
-            location=Path("/tmp/test"),
+            repository="fedora",
         )
 
         repr_str = repr(event)
@@ -75,25 +75,25 @@ class TestPkgEvent:
         event1 = PkgEvent(
             name="test-package",
             version="1.0.0",
-            summary="Test package",
+            manager="dnf",
             scope="user",
-            location=Path("/tmp/test"),
+            repository="fedora",
         )
 
         event2 = PkgEvent(
             name="test-package",
             version="1.0.0",
-            summary="Test package",
+            manager="dnf",
             scope="user",
-            location=Path("/tmp/test"),
+            repository="fedora",
         )
 
         event3 = PkgEvent(
             name="different-package",
             version="1.0.0",
-            summary="Test package",
+            manager="dnf",
             scope="user",
-            location=Path("/tmp/test"),
+            repository="fedora",
         )
 
         assert event1 == event2
@@ -104,18 +104,18 @@ class TestPkgEvent:
         event = PkgEvent(
             name="test-package",
             version="1.0.0",
-            summary="Test package",
+            manager="dnf",
             scope="user",
-            location=Path("/tmp/test"),
+            repository="fedora",
         )
 
         result = event.to_dict()
 
         assert result["name"] == "test-package"
         assert result["version"] == "1.0.0"
-        assert result["summary"] == "Test package"
+        assert result["manager"] == "dnf"
         assert result["scope"] == "user"
-        assert result["location"] == "/tmp/test"
+        assert result["repository"] == "fedora"
         assert "when" in result
         assert result["when"].endswith("Z")  # Should end with Z for UTC
 
@@ -124,13 +124,13 @@ class TestPkgEvent:
         event = PkgEvent(
             name="system-package",
             version="2.0.0",
-            summary="System package",
+            manager="dnf",
             scope="system",
-            location=Path("/var/log/test"),
+            repository="fedora",
         )
 
         assert event.scope == "system"
-        assert str(event.location) == "/var/log/test"
+        assert event.repository == "fedora"
 
     def test_pkg_event_custom_datetime(self):
         """Test PkgEvent with custom datetime."""
@@ -138,9 +138,9 @@ class TestPkgEvent:
         event = PkgEvent(
             name="test-package",
             version="1.0.0",
-            summary="Test package",
+            manager="dnf",
             scope="user",
-            location=Path("/tmp/test"),
+            repository="fedora",
             when=custom_time,
         )
 
@@ -152,9 +152,9 @@ class TestPkgEvent:
         user_event = PkgEvent(
             name="user-package",
             version="1.0.0",
-            summary="User package",
+            manager="dnf",
             scope="user",
-            location=Path("/home/user/test"),
+            repository="fedora",
         )
         assert user_event.scope == "user"
 
@@ -162,9 +162,9 @@ class TestPkgEvent:
         system_event = PkgEvent(
             name="system-package",
             version="1.0.0",
-            summary="System package",
+            manager="dnf",
             scope="system",
-            location=Path("/var/log/test"),
+            repository="fedora",
         )
         assert system_event.scope == "system"
 
@@ -173,9 +173,9 @@ class TestPkgEvent:
         event = PkgEvent(
             name="test-package",
             version="1.0.0",
-            summary="Test package",
+            manager="dnf",
             scope="user",
-            location=Path("/tmp/test"),
+            repository="fedora",
         )
 
         # Dataclasses are not frozen by default, so attributes should be mutable

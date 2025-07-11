@@ -8,7 +8,37 @@ try:
 
     WATCHDOG_AVAILABLE = True
 except ImportError:
+    # Provide a minimal stub so type checking and runtime import still work in environments
+    # where watchdog is not installed (e.g., during testing).
     WATCHDOG_AVAILABLE = False
+
+    class FileSystemEventHandler:  # type: ignore
+        """Fallback no-op event handler when watchdog is unavailable."""
+
+        def __init__(self, *args, **kwargs):
+            pass
+
+        # Define the methods used in DownloadsEventHandler to avoid attribute errors
+        def on_created(self, event):  # noqa: D401
+            pass
+
+    class Observer:  # type: ignore
+        """Fallback no-op observer when watchdog is unavailable."""
+
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def schedule(self, *args, **kwargs):  # noqa: D401
+            pass
+
+        def start(self):  # noqa: D401
+            pass
+
+        def stop(self):  # noqa: D401
+            pass
+
+        def join(self):  # noqa: D401
+            pass
 
 logger = logging.getLogger(__name__)
 
@@ -74,13 +104,19 @@ class DownloadsEventHandler(FileSystemEventHandler):
 
         if path.suffix.lower() in package_extensions:
             if self.pkg_logger:
+                try:
+                    file_size = path.stat().st_size
+                except OSError as e:
+                    logger.warning(f"Could not get file size for {path}: {e}")
+                    file_size = 0
+                
                 self.pkg_logger.log_package(
                     path.name,  # Use full filename
                     "download",
                     "install",
                     metadata={
                         "file_path": str(path),
-                        "file_size": path.stat().st_size,
+                        "file_size": file_size,
                         "file_type": path.suffix.lower(),
                     },
                 )

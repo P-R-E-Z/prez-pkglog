@@ -12,6 +12,9 @@ help:
 lint:
 	uv run ruff check src/
 
+mypy:
+	uv run mypy src/
+
 test:
 	uv run pytest -q
 

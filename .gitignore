@@ -38,3 +38,4 @@ rpmbuild/
 *.pid.lock
 *.json
 *.toml
+*.tmp

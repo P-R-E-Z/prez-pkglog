@@ -7,7 +7,7 @@ import shutil
 import subprocess
 from typing import Any, ClassVar, final
 
-from .base import PackageBackend, PackageInfo
+from ..base import PackageBackend, PackageInfo
 
 # Configure logging
 logger = logging.getLogger(__name__)

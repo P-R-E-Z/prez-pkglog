@@ -20,12 +20,12 @@
 
 ## Installation
 
-```bash
-git clone https://github.com/P-R-E-Z/prez-pkglog.git
-chomd +x prez-pkglog
-```
+Package builds will soon be available from my Copr repository.  Until then, build the RPM locally (see below) or install with `pipx`:
 
-See the [Building the RPM yourself](#building-the-rpm-yourself) section for instructions on building from source.
+```bash
+# temporary installation via pipx
+pipx install prez-pkglog==0.5.0
+```
 
 ---
 

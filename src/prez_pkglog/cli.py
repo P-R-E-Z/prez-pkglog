@@ -8,11 +8,14 @@ import json
 def require_sudo_for_system_scope(f):
     @wraps(f)
     def decorated_function(scope, *args, **kwargs):
+        """Wrapper that ensures proper privilege for system scope."""
         if scope == "system" and os.geteuid() != 0:
             click.echo("Error: System scope requires administrative privileges.")
             click.echo("Run with sudo or use --scope user.")
             return
-        return f(scope, *args, **kwargs)
+
+        # Forward original positional args untouched; provide scope explicitly
+        return f(*args, scope=scope, **kwargs)
 
     return decorated_function
 
@@ -38,8 +41,9 @@ def status(scope):
 
     config = Config()
     config.set("scope", scope)
+    config.save()
 
-    logger = PackageLogger()
+    logger = PackageLogger(config)
     stats = logger.get_statistics()
 
     click.echo(f"Scope: {stats['scope']}")
@@ -67,8 +71,9 @@ def daemon(scope):
 
     config = Config()
     config.set("scope", scope)
+    config.save()
 
-    logger = PackageLogger()
+    logger = PackageLogger(config)
 
     # Only start download monitoring if in user scope
     if scope == "user":
@@ -108,6 +113,7 @@ def export(scope, format):
 
     config = Config()
     config.set("scope", scope)
+    config.save()
 
     logger = PackageLogger(config)
 
@@ -132,6 +138,7 @@ def setup(scope):
 
     config = Config()
     config.set("scope", scope)
+    config.save()
 
     logger = PackageLogger(config)
 
@@ -157,6 +164,7 @@ def install(name, manager, scope):
 
     config = Config()
     config.set("scope", scope)
+    config.save()
     logger = PackageLogger(config)
     logger.log_package(name, manager, "install")
     click.echo(f"Logged install of '{name}' using '{manager}'.")
@@ -179,6 +187,7 @@ def remove(name, manager, scope):
 
     config = Config()
     config.set("scope", scope)
+    config.save()
     logger = PackageLogger(config)
     logger.log_package(name, manager, "remove")
     click.echo(f"Logged removal of '{name}' using '{manager}'.")
@@ -202,6 +211,7 @@ def query(name, manager, days, scope):
 
     config = Config()
     config.set("scope", scope)
+    config.save()
     logger = PackageLogger(config)
 
     since = None

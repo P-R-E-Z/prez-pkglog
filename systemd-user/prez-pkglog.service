@@ -6,6 +6,7 @@ After=network-online.target
 [Service]
 Type=simple
 ExecStart=%h/.local/bin/prez-pkglog daemon --scope user
+Environment=PYTHONUNBUFFERED=1
 Restart=on-failure
 RestartSec=10
 

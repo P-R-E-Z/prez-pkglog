@@ -63,7 +63,6 @@ except importlib.metadata.PackageNotFoundError:
 # These imports are at the bottom to avoid circular imports
 from . import backends  # noqa: F401, E402
 
-# Register built-in backends
-from .backends.dnf import DnfBackend  # noqa: E402
-
-register_backend(DnfBackend.name, DnfBackend)
+# Register all dynamically discovered backends
+for backend_name, backend_class in backends.discovered_backends.items():
+    register_backend(backend_name, backend_class)

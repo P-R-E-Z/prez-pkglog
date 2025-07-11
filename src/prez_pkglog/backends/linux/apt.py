@@ -7,7 +7,7 @@ import shutil
 import subprocess
 from typing import Any, ClassVar, final
 
-from .base import PackageBackend, PackageInfo
+from ..base import PackageBackend, PackageInfo
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -54,9 +54,20 @@ class AptBackend(PackageBackend):
 
             packages: dict[str, PackageInfo] = {}
             for line in result.stdout.splitlines():
-                if not line:
+                if not line.strip():
                     continue
-                name, version, arch = line.strip().split("\t")
+                try:
+                    name, version, arch = line.strip().split("\t")
+                except ValueError:
+                    # Malformed line – log and skip
+                    logger.debug("Skipping malformed dpkg-query line: %s", line)
+                    continue
+
+                # Empty parsed values which would indicate a malformed entry
+                if not (name and version and arch):
+                    logger.debug("Incomplete package information in line: %s", line)
+                    continue
+
                 packages[name] = PackageInfo(
                     name=name, version=version, architecture=arch, installed=True
                 )

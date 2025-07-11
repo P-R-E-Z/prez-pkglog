@@ -481,7 +481,7 @@ This project uses `bump2version` to manage versioning, which is handled by the `
 1. Ensure your `main` branch is clean and up to date.
 2. Update `CHANGELOG.md` with all the changes for the new version. Commit the changes.
 3. Run the release command from the `Makefile`, specifying `patch`, `minor`, or `major`:
-   
+  
     ```bash
     make release v=minor
     ```

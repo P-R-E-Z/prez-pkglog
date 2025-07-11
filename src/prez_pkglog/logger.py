@@ -3,8 +3,11 @@ import datetime as dt
 import json
 import pathlib
 import sys
-from typing import Dict, Any, Optional
+import os
+from typing import Dict, Any, Optional, Iterator
 import logging
+import threading
+from contextlib import contextmanager
 
 try:
     import toml
@@ -15,10 +18,40 @@ from .config import Config
 
 logger = logging.getLogger(__name__)
 
+# Cross-platform file-lock helpers                   
+if os.name == "posix":
+    import fcntl  # type: ignore
+
+    @contextmanager
+    def _file_lock(path: pathlib.Path) -> Iterator[None]:
+        """Context manager acquiring an exclusive advisory lock on *path*."""
+        # Open file handle (create if absent) strictly for locking
+        with path.open("a") as lock_fp:
+            try:
+                fcntl.flock(lock_fp, fcntl.LOCK_EX)
+                yield
+            finally:
+                fcntl.flock(lock_fp, fcntl.LOCK_UN)
+
+else:  # Windows – use msvcrt
+    import msvcrt  # type: ignore
+
+    @contextmanager
+    def _file_lock(path: pathlib.Path) -> Iterator[None]:
+        with path.open("a") as lock_fp:
+            try:
+                # Lock entire file
+                msvcrt.locking(lock_fp.fileno(), msvcrt.LK_LOCK, 1)
+                yield
+            finally:
+                lock_fp.seek(0)
+                msvcrt.locking(lock_fp.fileno(), msvcrt.LK_UNLCK, 1)
+
 
 class PackageLogger:
     def __init__(self, config: Optional[Config] = None):
         self.config = config or Config()
+        self._thread_lock = threading.Lock()
         self._setup_paths()
         self._ensure_directories()
 
@@ -94,32 +127,42 @@ class PackageLogger:
     def _append_json(self, entry: Dict[str, Any]):
         """Append entry to JSON log file"""
         try:
-            # Read existing data
-            if self.json_file.exists() and self.json_file.stat().st_size > 0:
-                data = json.loads(self.json_file.read_text())
-            else:
-                data = []
+            with self._thread_lock:
+                with _file_lock(self.json_file):
+                    # Read existing data
+                    if self.json_file.exists() and self.json_file.stat().st_size > 0:
+                        data = json.loads(self.json_file.read_text())
+                    else:
+                        data = []
 
-            # Append new entry
-            data.append(entry)
+                    # Append new entry
+                    data.append(entry)
 
-            # Write back to file with memory-efficient streaming for large files
-            if len(data) > 1000:  # Use streaming for large datasets
-                self._write_json_streaming(data)
-            else:
-                self.json_file.write_text(json.dumps(data, indent=2))
+                    # Write back to file with memory efficient streaming for large files
+                    if len(data) > 1000:
+                        self._write_json_streaming(data)
+                    else:
+                        self._atomic_write(self.json_file, json.dumps(data, indent=2))
         except Exception as e:
             logger.error(f"Error writing to JSON log file: {e}")
 
+    def _atomic_write(self, path: pathlib.Path, content: str) -> None:
+        """Write *content* to *path* atomically using a temporary file."""
+        tmp_path = path.with_suffix(path.suffix + ".tmp")
+        tmp_path.write_text(content)
+        tmp_path.replace(path)
+
     def _write_json_streaming(self, data: list):
-        """Write JSON data using streaming to avoid memory issues"""
-        with self.json_file.open("w") as f:
+        """Write JSON data using streaming to avoid memory issues atomically."""
+        tmp_path = self.json_file.with_suffix(".json.tmp")
+        with tmp_path.open("w") as f:
             f.write("[\n")
             for i, item in enumerate(data):
                 json.dump(item, f, indent=2)
                 if i < len(data) - 1:
                     f.write(",\n")
             f.write("\n]")
+        tmp_path.replace(self.json_file)
 
     def _append_toml(self, entry: Dict[str, Any]):
         """Append entry to TOML log file"""
@@ -127,11 +170,13 @@ class PackageLogger:
             return
 
         try:
-            with self.toml_file.open("a") as f:
-                if entry.get("removed"):
-                    f.write("# --REMOVED--\n")
-                f.write(toml.dumps({"package": entry}))
-                f.write("\n")
+            with self._thread_lock:
+                with _file_lock(self.toml_file):
+                    with self.toml_file.open("a") as f:
+                        if entry.get("removed"):
+                            f.write("# --REMOVED--\n")
+                        f.write(toml.dumps({"package": entry}))
+                        f.write("\n")
         except Exception as e:
             logger.error(f"Error writing to TOML log file: {e}")
 

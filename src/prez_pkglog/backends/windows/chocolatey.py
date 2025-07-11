@@ -20,7 +20,7 @@ class ChocolateyBackend(PackageBackend):
 
     This backend relies on Chocolatey's hook mechanism for automatic logging.
     A contributor would need to create PowerShell scripts in
-    `$env:ChocolateyInstall\hooks` (e.g., `pre-install.ps1`, `post-uninstall.ps1`)
+    `$env:ChocolateyInstall\\hooks` (e.g., `pre-install.ps1`, `post-uninstall.ps1`)
     that call the `prez-pkglog` CLI.
 
     See: https://docs.chocolatey.org/en-us/features/hook-scripts
