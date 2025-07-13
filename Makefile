@@ -28,7 +28,11 @@ wheel:
 
 srpm: sdist
 	mkdir -p $(RPMBUILD_DIR)/SOURCES
-	cp dist/$(subst -,_,${PROJECT})-${VERSION}.tar.gz $(RPMBUILD_DIR)/SOURCES/
+	# The sdist produced by Python build uses an underscore in the archive name
+	# (e.g. prez_pkglog-0.6.1.tar.gz) while the RPM spec expects a hyphen
+	# (prez-pkglog-0.6.1.tar.gz). Copy and rename accordingly so rpmbuild finds it.
+	cp dist/$(subst -,_,${PROJECT})-${VERSION}.tar.gz \
+	  $(RPMBUILD_DIR)/SOURCES/$(PROJECT)-$(VERSION).tar.gz
 	rpmbuild -bs $(SPEC)
 
 rpm: srpm
