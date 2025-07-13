@@ -14,7 +14,7 @@ BuildRequires:  pyproject-rpm-macros
 
 # Explicit runtime dependencies (until automatic dependency generation is configured)
 Requires:  python3dist(appdirs)
-Requires:  python3dist(pydantic) >= 2.11.7
+Requires:  python3dist(pydantic) >= 2
 Requires:  python3dist(python-dotenv)
 Requires:  python3dist(rich)
 Requires:  python3dist(typer)

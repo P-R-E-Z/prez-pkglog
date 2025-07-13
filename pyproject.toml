@@ -17,7 +17,7 @@ classifiers = [
 ]
 dependencies = [
     "appdirs>=1.4.4",
-    "pydantic>=2.11.7",
+    "pydantic>=2",
     "python-dotenv>=1.1.1",
     "rich>=14.0.0",
     "typer>=0.16.0",
