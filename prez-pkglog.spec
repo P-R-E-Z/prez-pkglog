@@ -1,6 +1,6 @@
 # RpmSpec
 Name:    prez-pkglog
-Version: 0.5.3
+Version: 0.6.0
 Release: 1%{?dist}
 Summary: Cross-platform package installation logger
 
