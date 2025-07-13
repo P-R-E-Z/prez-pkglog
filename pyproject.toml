@@ -1,6 +1,6 @@
 [project]
 name = "prez-pkglog"
-version = "0.5.2"
+version = "0.5.3"
 description = "Cross-platform package installation logger"
 readme = "README.md"
 requires-python = ">=3.13"
