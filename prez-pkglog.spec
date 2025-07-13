@@ -6,11 +6,12 @@ Summary: Cross-platform package installation logger
 
 License:    MIT
 URL:        https://github.com/P-R-E-Z/prez-pkglog
-Source0:    prez_pkglog-%{version}.tar.gz
+Source0:    %{name}-%{version}.tar.gz
 
 BuildArch:  noarch
 
 BuildRequires:  pyproject-rpm-macros
+BuildRequires:  python3dist(pytest)
 
 # Explicit runtime dependencies (until automatic dependency generation is configured)
 Requires:  python3dist(appdirs)
@@ -26,8 +27,9 @@ Requires:  python3dist(watchdog)
 Prez-Pkglog is a cross-platform tool to log package installations, downloaded files, and removals from various
 package managers. This utility is designed to improve system package management.
 
+# Preparation phase
 %prep
-%autosetup -n prez_pkglog-%{version}
+%autosetup -S git -n %{name}-%{version}
 # Convert SPDX string back to table form for older setuptools in system RPM build
 sed -i 's/^license = "MIT"/license = { text = "MIT" }/' pyproject.toml
 
@@ -36,6 +38,10 @@ sed -i 's/^license = "MIT"/license = { text = "MIT" }/' pyproject.toml
 
 %install
 %pyproject_install
+
+# Test suite
+%check
+%pytest -q
 
 # Install DNF plugin
 install -D -m 0644 src/prez_pkglog/hooks/dnf/plugin.py %{buildroot}%{_prefix}/lib/dnf/plugins/prez_pkglog.py

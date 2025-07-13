@@ -474,20 +474,58 @@ Examples:
 
 ### Version Bumping
 
-This project uses `bump2version` to manage versioning, which is handled by the `Makefile`.
+All version bumps are performed with **bump2version**.  The tool updates
+`pyproject.toml`, `prez-pkglog.spec`, `CHANGELOG.md`, and any other version
+strings, then creates an annotated Git tag.
 
-### Creating a Release
+```bash
+# patch / minor / major
+bump2version patch
+git push --follow-tags
+```
 
-1. Ensure your `main` branch is clean and up to date.
-2. Update `CHANGELOG.md` with all the changes for the new version. Commit the changes.
-3. Run the release command from the `Makefile`, specifying `patch`, `minor`, or `major`:
-  
-    ```bash
-    make release v=minor
-    ```
+> The `make release v=…` target still works, but you can call `bump2version`
+> directly if you prefer.
 
-    This command will bump the version number in `pyproject.toml`, create a new commit, tag it, and push the commit and tags to the repository.
-4. Finally, create a new release on GitHub using the new tag, and paste the changelog contents into the description.
+### Automated Release Pipeline (GitHub Actions)
+
+When the tag hits GitHub, the **release.yml** workflow performs the heavy
+lifting:
+
+1. Builds the sdist, SRPM, and RPM for every enabled Fedora/EPEL target.
+2. Runs `rpmlint` and executes the whole pytest suite in the spec’s `%check`
+   section.
+3. Signs the resulting RPMs with the project’s GPG key (provided as encrypted
+   secrets `GPG_PRIVATE_KEY` + `GPG_PASSPHRASE`).
+4. Uploads the SRPM to your Copr project via `copr-cli` using the
+   `COPR_LOGIN`/`COPR_TOKEN` secrets.
+
+No manual `rpmbuild` or `copr-cli build` steps are required anymore.
+
+### Preparing the Secrets
+
+Set the following **repository secrets** so the workflow can operate:
+
+| Secret name         | Description                                   |
+|---------------------|-----------------------------------------------|
+| `GPG_PRIVATE_KEY`   | Base-64-encoded *private* key block            |
+| `GPG_PASSPHRASE`    | Passphrase for the key (may be empty)          |
+| `COPR_LOGIN`        | Your Copr username                             |
+| `COPR_TOKEN`        | API token from the Copr *API* tab              |
+
+> Tip : create a dedicated key used **only** for package signing.
+
+### Manual RPM Builds (optional)
+
+If you still need a local build:
+
+```bash
+make rpm         # build SRPM+RPM in ~/rpmbuild
+make install     # install the freshly built package
+```
+
+Those targets now mimic what the CI does (including running the test-suite via
+%check).
 
 ---
 

@@ -1,3 +1,9 @@
+prez-pkglog (0.5.3-1) unstable; urgency=medium
+
+  * New upstream release.
+
+ -- Prez <154857421+P-R-E-Z@users.noreply.github.com>  Thu, 17 Jul 2025 14:00:00 +0000
+
 prez-pkglog (0.5.0-1) UNRELEASED; urgency=medium
 
   * Initial release.

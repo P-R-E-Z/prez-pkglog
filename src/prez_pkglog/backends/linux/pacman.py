@@ -8,6 +8,7 @@ import subprocess
 from typing import Any, ClassVar, final
 
 from ..base import PackageBackend, PackageInfo
+from ..helpers import parse_pacman_query_line
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -60,9 +61,12 @@ class PacmanBackend(PackageBackend):
 
             packages: dict[str, PackageInfo] = {}
             for line in result.stdout.splitlines():
-                if not line:
+                parsed = parse_pacman_query_line(line)
+                if parsed is None:
+                    # Malformed line was already logged by the helper
                     continue
-                name, version = line.strip().rsplit(" ", 1)
+
+                name, version = parsed
                 packages[name] = PackageInfo(
                     name=name, version=version, installed=True
                 )

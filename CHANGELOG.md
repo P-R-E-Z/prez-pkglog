@@ -28,3 +28,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **CLI Refactoring**: The `install` and `remove` commands were moved from a standalone script into the main `
+
+## [0.5.4] - 2025-07-13
+
+### Added
+- **Automatic Release Workflow**: New `.github/workflows/release.yml` builds the sdist/SRPM & RPM, runs the full test suite with `%pytest`, signs the binaries with your GPG key, and uploads the SRPM to Copr when a version tag is pushed.
+- **Parsing Helper**: Introduced `parse_pacman_query_line()` in `src/prez_pkglog/backends/helpers.py` for robust Pacman output parsing.
+- **Spec Tests**: Added `%check` section to `prez-pkglog.spec` so the RPM build runs `pytest` automatically.
+
+### Changed
+- **Pacman Backend** now uses the new parsing helper and gracefully skips malformed lines.
+- **RPM Spec** updated to use `%autosetup -S git -n %{name}-%{version}`, added `BuildRequires: python3dist(pytest)`, and switched `Source0` macro to `%{name}-%{version}.tar.gz`.
+- **Release Process** documented in *Contributing* – tagging via `bump2version` triggers the GitHub release pipeline; no more manual `make rpm && copr-cli`.
+
+### Fixed
+- Minor packaging clean-ups and logging improvements discovered during the refactor.
+
+[0.5.3]: https://github.com/P-R-E-Z/prez-pkglog/releases/tag/v0.5.3

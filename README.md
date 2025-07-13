@@ -6,6 +6,37 @@
 
 ---
 
+## Table of Contents
+
+1. [Features](#features)
+2. [Installation](#installation)
+3. [Package-manager integration](#package-manager-integration)
+
+<details>
+<summary><strong>4. Configuration</strong></summary>
+
+&nbsp;&nbsp;1. [User Scope](#user-scope-default)<br/>
+&nbsp;&nbsp;2. [System Scope](#system-scope-requires-administrator)<br/>
+&nbsp;&nbsp;3. [DNF Plugin Configuration](#dnf-plugin-configuration)
+
+</details>
+
+<details>
+<summary><strong>5. Usage</strong></summary>
+
+&nbsp;&nbsp;1. [Setup](#setup)<br/>
+&nbsp;&nbsp;2. [Check Status](#check-status)<br/>
+&nbsp;&nbsp;3. [Start Monitoring](#start-monitoring)<br/>
+&nbsp;&nbsp;4. [Query Logs](#query-logs)<br/>
+&nbsp;&nbsp;5. [Export Logs](#export-logs)<br/>
+&nbsp;&nbsp;6. [Manual Logging](#manual-logging)
+
+</details>
+
+6. [Shell Integration](#shell-integration)
+7. [Log File Examples](#log-file-examples)
+8. [Contributing](CONTRIBUTING.md)
+
 ## Features
 
 - **Zero-maintenance Hooks** - hooks directly into DNF; no polling required.
@@ -20,12 +51,119 @@
 
 ## Installation
 
-Package builds will soon be available from my Copr repository.  Until then, build the RPM locally (see below) or install with `pipx`:
+
+Package builds will soon be available from my Copr repository.  Until then:
+
+* **Fedora / RHEL** – build & install the RPM as shown below (automatic DNF integration).
+* **All other platforms** – install the pure-Python package with `pipx` (or `pip`) and, if you like, add a small hook so your package manager calls the CLI automatically.
+
+### Quick install via pipx (works everywhere)
 
 ```bash
-# temporary installation via pipx
-pipx install prez-pkglog==0.5.0
+# system Python → isolated environment in ~/.local/pipx:
+pipx install prez-pkglog==0.5.3
+
+# verify
+prez-pkglog --help
 ```
+
+You can now enable the download-monitoring service:
+
+```bash
+systemctl --user daemon-reload   # first time only
+systemctl --user enable --now prez-pkglog.service
+```
+
+### (Optional) DIY hooks for other package managers
+
+<details>
+<summary><strong>APT / Debian & Ubuntu</strong></summary>
+
+1. Create `/etc/apt/apt.conf.d/99prez-pkglog` (system-wide) or `~/.config/apt/apt.conf.d/99prez-pkglog` (user):
+
+```conf
+DPkg::Post-Invoke { "prez-pkglog install-apt-hook || true"; };
+```
+
+2. Put a tiny helper on your PATH, e.g. `/usr/local/bin/prez-pkglog-install-apt-hook`:
+
+```bash
+#!/usr/bin/env bash
+# Log every package touched in the most recent dpkg transaction
+awk '{print $4}' /var/log/dpkg.log | tail -n +2 | while read -r pkg; do
+  prez-pkglog install "$pkg" apt
+done
+```
+
+Make it executable (`chmod +x …`).
+
+</details>
+
+<details>
+<summary><strong>Pacman / Arch</strong></summary>
+
+Create `/etc/pacman.d/hooks/prez-pkglog.hook`:
+
+```ini
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Operation = Remove
+Type      = Package
+Target    = *
+
+[Action]
+Description = Log package transaction with prez-pkglog
+When        = PostTransaction
+Exec        = /usr/bin/prez-pkglog pacman-hook %t
+```
+
+`%t` is the transaction database path; you can parse it inside `pacman-hook` to emit individual `prez-pkglog install/remove` calls.
+
+</details>
+
+<details>
+<summary><strong>Other managers</strong></summary>
+
+For Homebrew, Chocolatey and Winget, use manual logging or adapt the examples above. Read _Package-manager integration_ and [CONTRIBUTING](CONTRIBUTING.md) for what’s still needed.
+
+</details>
+
+---
+
+## Package-manager integration
+
+<details>
+<summary><strong>Linux</strong></summary>
+
+| Package manager | Status | Setup |
+|-----------------|--------|-------|
+| **DNF** (Fedora/RHEL) | Automatic logging via plugin | See [DNF Plugin Configuration](#dnf-plugin-configuration) and the *Start&nbsp;Monitoring* section. The RPM installs `/usr/lib/dnf/plugins/prez_pkglog.py` and a sample config; enable it with `enabled=1` and restart DNF. |
+| **APT** (Debian/Ubuntu) | Planned | Parser exists (`apt.py`), but no hook yet. A `DPkg::Post-Invoke` script is needed. Help welcome → [Contributing](CONTRIBUTING.md) |
+| **Pacman** (Arch) | Planned | Parser exists (`pacman.py`). Needs an `alpm` hook (`/etc/pacman.d/hooks/prez-pkglog.hook`). See [Contributing](CONTRIBUTING.md) |
+
+</details>
+
+<details>
+<summary><strong>macOS</strong></summary>
+
+| Package manager | Status | Notes |
+|-----------------|--------|-------|
+| **Homebrew** | Planned | Parsing implemented (`brew.py`). Requires a post-install wrapper or Homebrew *tap* to invoke the CLI automatically. See [Contributing](CONTRIBUTING.md). |
+
+</details>
+
+<details>
+<summary><strong>Windows</strong></summary>
+
+| Package manager | Status | Notes |
+|-----------------|--------|-------|
+| **Chocolatey** | Planned | Parser implemented (`chocolatey.py`). Needs a PowerShell extension/post-install script. |
+| **Winget** | Planned | Parser implemented (`winget.py`). Requires a `winget` source extension or scheduled task to call the CLI. |
+
+See the [Contributing guide](CONTRIBUTING.md) if you’d like to help wire up these back-ends.
+
+</details>
 
 ---
 
@@ -104,11 +242,20 @@ prez-pkglog status
 
 Starts the monitoring daemon. For users, this monitors the downloads directory.
 ```bash
-# Start download monitoring (user scope only)
+# Start download monitoring (user scope only, foreground)
 prez-pkglog daemon
 
-# To run as a service:
+# Run continuously via systemd-user service
+# (the unit file is shipped in /usr/lib/systemd/user by the RPM)
+#
+# 1. Reload user units to ensure systemd sees the new file
+systemctl --user daemon-reload
+# 2. Enable + start the logger – this will automatically create
+#    ~/.config/systemd/user/ if it does not already exist.
 systemctl --user enable --now prez-pkglog.service
+
+# Optional: keep the service running even after logging out
+sudo loginctl enable-linger "$USER"
 ```
 
 ### Query Logs
