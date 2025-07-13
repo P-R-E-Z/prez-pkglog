@@ -12,6 +12,14 @@ BuildArch:  noarch
 
 BuildRequires:  pyproject-rpm-macros
 
+# Explicit runtime dependencies (until automatic dependency generation is configured)
+Requires:  python3dist(appdirs)
+Requires:  python3dist(pydantic) >= 2.11.7
+Requires:  python3dist(python-dotenv)
+Requires:  python3dist(rich)
+Requires:  python3dist(typer)
+Requires:  python3dist(watchdog)
+
 %global _pyproject_buildrequires_extra python-dnf python-watchdog python-appdirs python-rich python-typer python-pydantic python-dotenv python-toml
 
 %description
