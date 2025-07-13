@@ -69,7 +69,10 @@ class AptBackend(PackageBackend):
                     continue
 
                 packages[name] = PackageInfo(
-                    name=name, version=version, architecture=arch, installed=True
+                    name=name,
+                    version=version,
+                    architecture=arch,
+                    installed=True,
                 )
             return packages
         except (subprocess.SubprocessError, FileNotFoundError, OSError) as e:
@@ -83,7 +86,6 @@ class AptBackend(PackageBackend):
         Transaction logging is handled by an external hook that calls the CLI.
         """
         logger.warning(
-            "register_transaction is not supported for the apt backend. "
-            "Use a DPkg::Post-Invoke hook."
+            "register_transaction is not supported for the apt backend. Use a DPkg::Post-Invoke hook."
         )
         return False

@@ -90,8 +90,7 @@ class Config:
             # Check if user is root/admin
             if os.geteuid() != 0:
                 logger.warning(
-                    "System scope selected but process lacks root privileges – "
-                    "falling back to user scope."
+                    "System scope selected but process lacks root privileges – falling back to user scope."
                 )
                 self.settings["scope"] = "user"
 
@@ -142,7 +141,12 @@ class Config:
             k: v
             for k, v in self.settings.items()
             if k
-            in {"scope", "enable_dnf_hooks", "enable_download_monitoring", "log_format"}
+            in {
+                "scope",
+                "enable_dnf_hooks",
+                "enable_download_monitoring",
+                "log_format",
+            }
         }
         return f"Config(scope={self.scope}, settings={settings_preview})"
 

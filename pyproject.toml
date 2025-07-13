@@ -30,11 +30,14 @@ dev = [
     "build>=1.2.2.post1",
     "bump2version>=1.0.1",
     "click>=8.2.1",
+    "flake8==7.0.0",
+    "pyproject-flake8>=7.0.0",
     "mypy>=1.16.1",
     "pre-commit>=4.2.0",
     "pytest>=8.4.1",
     "pytest-cov>=6.2.1",
     "rpm>=0.4.0",
+    "ruff>=0.12.3",
     "setuptools>=80.9.0",
     "tito>=0.6.26",
     "typer>=0.16.0",
@@ -47,3 +50,19 @@ build-backend = "setuptools.build_meta"
 
 [project.scripts]
 prez-pkglog = "prez_pkglog.cli:cli"
+
+[tool.uv]
+default-groups = ["dev"]
+
+# ---------------- Lint configuration ----------------
+[tool.ruff]
+line-length = 88             # keep Black’s default or raise it
+lint.select = ["E", "F", "W"]
+lint.ignore = ["E501"]              # ignore long lines
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = ["E501"]
+
+[tool.black]
+line-length = 88

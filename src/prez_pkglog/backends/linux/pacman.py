@@ -80,7 +80,6 @@ class PacmanBackend(PackageBackend):
         Transaction logging is handled by an external hook that calls the CLI.
         """
         logger.warning(
-            "register_transaction is not supported for the pacman backend. "
-            "Use a pacman hook."
+            "register_transaction is not supported for the pacman backend. Use a pacman hook."
         )
         return False

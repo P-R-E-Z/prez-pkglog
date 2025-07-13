@@ -68,7 +68,6 @@ class ChocolateyBackend(PackageBackend):
         Transaction logging is handled by external hook scripts that call the CLI.
         """
         logger.warning(
-            "register_transaction is not supported for the chocolatey backend. "
-            "Use hook scripts."
+            "register_transaction is not supported for the chocolatey backend. Use hook scripts."
         )
         return False

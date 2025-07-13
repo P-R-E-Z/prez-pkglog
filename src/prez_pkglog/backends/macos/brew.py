@@ -81,7 +81,6 @@ class BrewBackend(PackageBackend):
         called from a shell wrapper function.
         """
         logger.warning(
-            "register_transaction is not supported for the brew backend. "
-            "Use a shell wrapper function."
+            "register_transaction is not supported for the brew backend. Use a shell wrapper function."
         )
         return False

@@ -1,7 +1,6 @@
 """Unit tests for the backend discovery system"""
 
-from unittest.mock import patch, MagicMock
-import pytest
+from unittest.mock import MagicMock
 
 from src.prez_pkglog.backends.base import PackageBackend
 from src.prez_pkglog import backends
@@ -26,7 +25,14 @@ class TestBackendDiscovery:
 
     def test_discovered_backends_contain_expected_backends(self):
         """Test that expected backends are discovered."""
-        expected_backends = {"apt", "dnf", "pacman", "brew", "chocolatey", "winget"}
+        expected_backends = {
+            "apt",
+            "dnf",
+            "pacman",
+            "brew",
+            "chocolatey",
+            "winget",
+        }
         discovered_names = set(backends.discovered_backends.keys())
 
         # All expected backends should be discovered
@@ -418,7 +424,14 @@ class TestBackendDiscoveryIntegration:
         assert len(_BACKENDS) > 0
 
         # Should have the backends we expect
-        expected_backends = {"apt", "dnf", "pacman", "brew", "chocolatey", "winget"}
+        expected_backends = {
+            "apt",
+            "dnf",
+            "pacman",
+            "brew",
+            "chocolatey",
+            "winget",
+        }
         registered_names = set(_BACKENDS.keys())
 
         assert expected_backends.issubset(registered_names)

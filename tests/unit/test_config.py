@@ -1,11 +1,9 @@
 """Unit tests for the config module"""
 
 import os
-import tempfile
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
-import pytest
 
 from src.prez_pkglog.config import Config
 

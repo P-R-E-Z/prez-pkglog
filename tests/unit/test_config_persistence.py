@@ -5,7 +5,7 @@ from unittest.mock import patch, MagicMock
 
 import pytest
 
-from src.prez_pkglog.config import Config, _ORIGINAL_HOME
+from src.prez_pkglog.config import Config
 
 
 class TestConfigPersistence:
@@ -55,7 +55,8 @@ class TestCLIScopePersistence:
     """Verify that CLI commands persist scope changes via Config.save()."""
 
     @pytest.mark.parametrize(
-        "command", ["status", "daemon", "setup", "export", "install", "remove", "query"]
+        "command",
+        ["status", "daemon", "setup", "export", "install", "remove", "query"],
     )
     def test_cli_commands_call_save(self, command, tmp_path, monkeypatch):
         """Each CLI command should invoke Config.save() after setting scope."""

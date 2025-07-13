@@ -1,10 +1,12 @@
 """Unit tests for the downloads monitor module"""
 
-import pytest
 from unittest.mock import patch, MagicMock
 from pathlib import Path
 
-from src.prez_pkglog.monitors.downloads import DownloadsMonitor, DownloadsEventHandler
+from src.prez_pkglog.monitors.downloads import (
+    DownloadsMonitor,
+    DownloadsEventHandler,
+)
 
 
 class TestDownloadsMonitor:
@@ -64,8 +66,7 @@ class TestDownloadsMonitor:
             monitor.start()
 
             mock_logger_module.warning.assert_called_with(
-                f"Downloads directory {monitor.downloads_dir} not found. "
-                "Monitoring disabled."
+                f"Downloads directory {monitor.downloads_dir} not found. Monitoring disabled."
             )
 
     @patch("src.prez_pkglog.monitors.downloads.WATCHDOG_AVAILABLE", True)
@@ -163,7 +164,8 @@ class TestDownloadsEventHandler:
 
             # Mock the actual Path creation inside the handler
             with patch(
-                "src.prez_pkglog.monitors.downloads.Path", return_value=mock_path
+                "src.prez_pkglog.monitors.downloads.Path",
+                return_value=mock_path,
             ):
                 handler.on_created(mock_event)
 
@@ -216,7 +218,8 @@ class TestDownloadsEventHandler:
 
             # Mock the actual Path creation inside the handler
             with patch(
-                "src.prez_pkglog.monitors.downloads.Path", return_value=mock_path
+                "src.prez_pkglog.monitors.downloads.Path",
+                return_value=mock_path,
             ):
                 handler.on_created(mock_event)
 
@@ -253,7 +256,8 @@ class TestDownloadsEventHandler:
 
                 # Mock the actual Path creation inside the handler
                 with patch(
-                    "src.prez_pkglog.monitors.downloads.Path", return_value=mock_path
+                    "src.prez_pkglog.monitors.downloads.Path",
+                    return_value=mock_path,
                 ):
                     handler.on_created(mock_event)
 
@@ -291,7 +295,8 @@ class TestDownloadsEventHandler:
 
                 # Mock the actual Path creation inside the handler
                 with patch(
-                    "src.prez_pkglog.monitors.downloads.Path", return_value=mock_path
+                    "src.prez_pkglog.monitors.downloads.Path",
+                    return_value=mock_path,
                 ):
                     # Should not raise any exception
                     handler.on_created(mock_event)
@@ -320,7 +325,8 @@ class TestDownloadsEventHandler:
             # Mock the actual Path creation inside the handler
             with (
                 patch(
-                    "src.prez_pkglog.monitors.downloads.Path", return_value=mock_path
+                    "src.prez_pkglog.monitors.downloads.Path",
+                    return_value=mock_path,
                 ),
                 patch(
                     "src.prez_pkglog.monitors.downloads.logger"

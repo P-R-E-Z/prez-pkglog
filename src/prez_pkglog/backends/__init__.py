@@ -33,8 +33,7 @@ for subdir_info in pkgutil.iter_modules([str(Path(__file__).parent)]):
             ):
                 if attribute.name in discovered_backends:
                     raise ImportError(
-                        f"Duplicate backend name '{attribute.name}' found. "
-                        "Backend names must be unique."
+                        f"Duplicate backend name '{attribute.name}' found. Backend names must be unique."
                     )
                 discovered_backends[attribute.name] = attribute
 

@@ -99,7 +99,12 @@ class TestPackageLogger:
                     "action": "install",
                     "removed": False,
                 },
-                {"name": "pkg2", "manager": "dnf", "action": "remove", "removed": True},
+                {
+                    "name": "pkg2",
+                    "manager": "dnf",
+                    "action": "remove",
+                    "removed": True,
+                },
                 {
                     "name": "file.rpm",
                     "manager": "download",

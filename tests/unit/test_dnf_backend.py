@@ -1,6 +1,5 @@
 """Unit tests for the DNF backend"""
 
-import subprocess
 from unittest.mock import patch, MagicMock
 
 from src.prez_pkglog.backends.linux.dnf import DnfBackend
@@ -50,7 +49,10 @@ class TestDnfBackend:
         mock_pkg2.reponame = "fedora"
 
         mock_query.return_value = [mock_pkg1, mock_pkg2]
-        mock_sack.query.return_value.installed.return_value = [mock_pkg1, mock_pkg2]
+        mock_sack.query.return_value.installed.return_value = [
+            mock_pkg1,
+            mock_pkg2,
+        ]
         mock_base.sack = mock_sack
         mock_base.fill_sack = MagicMock()
         mock_dnf.Base.return_value.__enter__ = MagicMock(return_value=mock_base)

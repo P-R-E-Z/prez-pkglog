@@ -3,7 +3,7 @@
 import time
 import tempfile
 from pathlib import Path
-from unittest.mock import patch, MagicMock, call
+from unittest.mock import patch, call
 import pytest
 
 from src.prez_pkglog.utils import (

@@ -2,7 +2,6 @@
 import datetime as dt
 import json
 import pathlib
-import sys
 import os
 from typing import Dict, Any, Optional, Iterator
 import logging
