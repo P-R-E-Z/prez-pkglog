@@ -29,7 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **CLI Refactoring**: The `install` and `remove` commands were moved from a standalone script into the main `
 
-## [0.5.4] - 2025-07-13
+## [0.6.0] - 2025-07-13
 
 ### Added
 - **Automatic Release Workflow**: New `.github/workflows/release.yml` builds the sdist/SRPM & RPM, runs the full test suite with `%pytest`, signs the binaries with your GPG key, and uploads the SRPM to Copr when a version tag is pushed.
