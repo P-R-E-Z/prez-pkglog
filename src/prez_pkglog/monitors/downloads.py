@@ -17,7 +17,7 @@ else:
         from watchdog.events import FileSystemEventHandler
 
         WATCHDOG_AVAILABLE = True
-    except ImportError:  
+    except ImportError:
         WATCHDOG_AVAILABLE = False
 
         class FileSystemEventHandler:  # type: ignore
