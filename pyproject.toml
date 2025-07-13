@@ -66,3 +66,10 @@ extend-ignore = ["E501"]
 
 [tool.black]
 line-length = 88
+
+[tool.mypy]
+ignore_missing_imports = true           # blanket
+# or per-module:
+# [[tool.mypy.overrides]]
+# module = ["dnf", "toml"]
+# ignore_missing_imports = true

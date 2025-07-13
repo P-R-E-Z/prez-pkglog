@@ -6,6 +6,8 @@ import sys
 from pathlib import Path
 from typing import List, Set, Union
 
+import hashlib
+
 
 def get_platform() -> str:
     """Get the current platform identifier
@@ -49,7 +51,7 @@ def is_wsl() -> bool:
     Returns:
         bool: True if the platform is WSL, False otherwise
     """
-    return get_platform() == "linux" and shutil.which("wslpath")
+    return bool(get_platform() == "linux" and shutil.which("wslpath"))
 
 
 def get_downloads_dir() -> List[Path]:
@@ -59,33 +61,28 @@ def get_downloads_dir() -> List[Path]:
         List[Path]: List of directories to search for downloads
     """
     home = Path.home()
+    dirs: List[Path] = []
+
     if is_windows():
-        # On Windows, check both the default Downloads folder and OneDrive if it exists
-        dirs = [
+        dirs.extend([
             home / "Downloads",
             home / "OneDrive" / "Downloads",
-        ]
+        ])
     elif is_macos():
-        # I don't know MacOS so let me know if this works
-        dirs = [
-            home / "Downloads",
-        ]
+        dirs.append(home / "Downloads")
     elif is_wsl():
-        # Same thing as MacOS... Let me know if this works lol
-        dirs = [
+        dirs.extend([
             home / "Downloads",
             home / "OneDrive" / "Downloads",
-        ]
+        ])
     else:  # Linux and other Unix systems
-        # Check XDG_DOWNLOAD_DIR first, then fall back to ~/Downloads
         xdg_download = os.environ.get("XDG_DOWNLOAD_DIR")
-        dirs = [
-            Path(xdg_download) if xdg_download else None,
-            home / "Downloads",
-        ]
+        if xdg_download:
+            dirs.append(Path(xdg_download))
+        dirs.append(home / "Downloads")
 
     # Filter out None values and non-existent directories
-    return [d for d in dirs if d and d.exists()]
+    return [d for d in dirs if d.exists()]
 
 
 def get_package_managers() -> Set[str]:
@@ -141,7 +138,7 @@ def normalize_path(path: Union[str, Path]) -> Path:
         return path
 
 
-def ensure_directory(path: Union[str, Path]) -> None:
+def ensure_directory(path: Union[str, Path]) -> Path:
     """Ensure that a directory exists at the given path, creating it if necessary
 
     Args:
@@ -155,7 +152,7 @@ def ensure_directory(path: Union[str, Path]) -> None:
     return path
 
 
-def get_file_checksum(file_path: Union[str, Path], algorith: str = "sha256") -> str:
+def get_file_checksum(file_path: Union[str, Path], algorithm: str = "sha256") -> str:
     """Get the checksum of a file using the specified algorithm
 
     Args:
@@ -164,5 +161,14 @@ def get_file_checksum(file_path: Union[str, Path], algorith: str = "sha256") -> 
 
     Returns:
         str: Hexadecimal checksum of the file's hash
-        :param algorith:
     """
+    file_path = Path(file_path)
+    hash_func = getattr(hashlib, algorithm, None)
+    if hash_func is None:
+        raise ValueError(f"Unsupported hash algorithm: {algorithm}")
+
+    h = hash_func()
+    with file_path.open("rb") as f:
+        for chunk in iter(lambda: f.read(8192), b""):
+            h.update(chunk)
+    return h.hexdigest()

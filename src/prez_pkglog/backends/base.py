@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import abc
 import logging
-from typing import Any, TypeVar
+from typing import Any, TypeVar, ClassVar
 
 from pydantic import BaseModel
 
@@ -18,6 +18,7 @@ class PackageInfo(BaseModel):
     name: str
     version: str
     source: str | None = None
+    description: str | None = None
     architecture: str | None = None
     repository: str | None = None
     installed: bool = False
@@ -26,6 +27,8 @@ class PackageInfo(BaseModel):
 
 class PackageBackend(abc.ABC):
     """Abstract base class for package manager backends"""
+
+    name: ClassVar[str] = ""
 
     def __init__(self, config: Any | None = None) -> None:
         """Initialize the backend

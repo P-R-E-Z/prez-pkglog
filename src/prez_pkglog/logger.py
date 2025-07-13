@@ -3,17 +3,23 @@ import datetime as dt
 import json
 import pathlib
 import os
-from typing import Dict, Any, Optional, Iterator
+from typing import Dict, Any, Optional, Iterator, cast
 import logging
 import threading
 from contextlib import contextmanager
 
-try:
-    import toml
-except ImportError:
-    toml = None
-
 from .config import Config
+
+# Placeholder for optional toml module
+toml: Any  # will be set by runtime import attempt below
+
+# Attempt to import the optional `toml` dependency at runtime.
+try:
+    import toml as _toml_module  # type: ignore
+except ImportError:  # pragma: no cover
+    _toml_module = None  # type: ignore[assignment]
+
+toml = cast(Optional[Any], _toml_module)  # type: ignore[assignment]
 
 logger = logging.getLogger(__name__)
 
@@ -40,11 +46,11 @@ else:  # Windows – use msvcrt
         with path.open("a") as lock_fp:
             try:
                 # Lock entire file
-                msvcrt.locking(lock_fp.fileno(), msvcrt.LK_LOCK, 1)
+                msvcrt.locking(lock_fp.fileno(), msvcrt.LK_LOCK, 1)  # type: ignore[attr-defined]
                 yield
             finally:
                 lock_fp.seek(0)
-                msvcrt.locking(lock_fp.fileno(), msvcrt.LK_UNLCK, 1)
+                msvcrt.locking(lock_fp.fileno(), msvcrt.LK_UNLCK, 1)  # type: ignore[attr-defined]
 
 
 class PackageLogger:
