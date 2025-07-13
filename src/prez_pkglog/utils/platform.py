@@ -64,17 +64,21 @@ def get_downloads_dir() -> List[Path]:
     dirs: List[Path] = []
 
     if is_windows():
-        dirs.extend([
-            home / "Downloads",
-            home / "OneDrive" / "Downloads",
-        ])
+        dirs.extend(
+            [
+                home / "Downloads",
+                home / "OneDrive" / "Downloads",
+            ]
+        )
     elif is_macos():
         dirs.append(home / "Downloads")
     elif is_wsl():
-        dirs.extend([
-            home / "Downloads",
-            home / "OneDrive" / "Downloads",
-        ])
+        dirs.extend(
+            [
+                home / "Downloads",
+                home / "OneDrive" / "Downloads",
+            ]
+        )
     else:  # Linux and other Unix systems
         xdg_download = os.environ.get("XDG_DOWNLOAD_DIR")
         if xdg_download:
