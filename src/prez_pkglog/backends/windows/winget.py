@@ -73,7 +73,5 @@ class WingetBackend(PackageBackend):
 
         Transaction logging would require a wrapper or polling mechanism.
         """
-        logger.warning(
-            "register_transaction is not supported for the winget backend."
-        )
+        logger.warning("register_transaction is not supported for the winget backend.")
         return False

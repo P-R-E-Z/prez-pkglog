@@ -18,7 +18,7 @@ from .config import Config
 
 logger = logging.getLogger(__name__)
 
-# Cross-platform file-lock helpers                   
+# Cross-platform file-lock helpers
 if os.name == "posix":
     import fcntl  # type: ignore
 

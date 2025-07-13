@@ -55,9 +55,7 @@ class ChocolateyBackend(PackageBackend):
                     continue
                 # Output is "name|version"
                 name, version = line.strip().split("|")
-                packages[name] = PackageInfo(
-                    name=name, version=version, installed=True
-                )
+                packages[name] = PackageInfo(name=name, version=version, installed=True)
             return packages
         except (subprocess.SubprocessError, FileNotFoundError, OSError) as e:
             logger.error(f"Failed to get installed packages using choco: {e}")

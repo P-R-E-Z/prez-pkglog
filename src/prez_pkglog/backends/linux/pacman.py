@@ -67,9 +67,7 @@ class PacmanBackend(PackageBackend):
                     continue
 
                 name, version = parsed
-                packages[name] = PackageInfo(
-                    name=name, version=version, installed=True
-                )
+                packages[name] = PackageInfo(name=name, version=version, installed=True)
             return packages
         except (subprocess.SubprocessError, FileNotFoundError, OSError) as e:
             logger.error(f"Failed to get installed packages using pacman: {e}")

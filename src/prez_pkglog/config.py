@@ -42,7 +42,7 @@ class Config:
         self._load_config()
         self._validate_scope()
 
-     # Persistence helpers
+    # Persistence helpers
     def _load_config(self) -> None:
         """Load configuration from *config_file* if it exists.
 
@@ -78,7 +78,9 @@ class Config:
             with self.config_file.open("w") as fp:
                 json.dump(self.settings, fp, indent=2)
         except OSError as err:
-            logger.warning("Failed to save configuration to %s: %s", self.config_file, err)
+            logger.warning(
+                "Failed to save configuration to %s: %s", self.config_file, err
+            )
 
     def _validate_scope(self):
         """Validate scope and permissions"""
@@ -136,7 +138,12 @@ class Config:
     def __str__(self) -> str:
         """Human-readable representation of the configuration instance."""
         # Include scope and a shortened view of settings to avoid long strings.
-        settings_preview = {k: v for k, v in self.settings.items() if k in {"scope", "enable_dnf_hooks", "enable_download_monitoring", "log_format"}}
+        settings_preview = {
+            k: v
+            for k, v in self.settings.items()
+            if k
+            in {"scope", "enable_dnf_hooks", "enable_download_monitoring", "log_format"}
+        }
         return f"Config(scope={self.scope}, settings={settings_preview})"
 
     def __repr__(self) -> str:

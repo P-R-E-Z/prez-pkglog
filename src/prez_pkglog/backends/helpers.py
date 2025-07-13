@@ -7,6 +7,7 @@ from typing import Tuple, Optional
 
 logger = logging.getLogger(__name__)
 
+
 # Pacman helpers
 def parse_pacman_query_line(line: str) -> Optional[Tuple[str, str]]:
     """Safely parse a single line from ``pacman -Q`` output.
@@ -45,4 +46,4 @@ def parse_pacman_query_line(line: str) -> Optional[Tuple[str, str]]:
         logger.debug("Skipping malformed pacman line (empty fields): %s", line)
         return None
 
-    return name, version 
+    return name, version

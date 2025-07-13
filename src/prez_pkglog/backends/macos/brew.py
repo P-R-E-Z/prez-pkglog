@@ -67,9 +67,7 @@ class BrewBackend(PackageBackend):
                     continue
                 # Output is like "neovim 0.7.2", "python@3.10 3.10.6"
                 name, version = line.strip().rsplit(" ", 1)
-                packages[name] = PackageInfo(
-                    name=name, version=version, installed=True
-                )
+                packages[name] = PackageInfo(name=name, version=version, installed=True)
             return packages
         except (subprocess.SubprocessError, FileNotFoundError, OSError) as e:
             logger.error(f"Failed to get installed packages using brew: {e}")
@@ -86,4 +84,4 @@ class BrewBackend(PackageBackend):
             "register_transaction is not supported for the brew backend. "
             "Use a shell wrapper function."
         )
-        return False 
+        return False

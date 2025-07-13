@@ -1,4 +1,5 @@
 """Downloads folder monitoring"""
+
 import logging
 from pathlib import Path
 
@@ -39,6 +40,7 @@ except ImportError:
 
         def join(self):  # noqa: D401
             pass
+
 
 logger = logging.getLogger(__name__)
 
@@ -100,7 +102,9 @@ class DownloadsEventHandler(FileSystemEventHandler):
         ext_str = self.config.get(
             "monitored_extensions", ".rpm,.deb,.pkg,.exe,.msi,.dmg"
         )
-        package_extensions = {f".{ext.strip().lstrip('.')}" for ext in ext_str.split(",")}
+        package_extensions = {
+            f".{ext.strip().lstrip('.')}" for ext in ext_str.split(",")
+        }
 
         if path.suffix.lower() in package_extensions:
             if self.pkg_logger:
@@ -109,7 +113,7 @@ class DownloadsEventHandler(FileSystemEventHandler):
                 except OSError as e:
                     logger.warning(f"Could not get file size for {path}: {e}")
                     file_size = 0
-                
+
                 self.pkg_logger.log_package(
                     path.name,  # Use full filename
                     "download",

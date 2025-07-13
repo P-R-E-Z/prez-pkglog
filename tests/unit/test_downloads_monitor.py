@@ -15,7 +15,7 @@ class TestDownloadsMonitor:
         mock_logger = MagicMock()
         mock_logger.config = MagicMock()
         mock_logger.config.get.return_value = "~/Downloads"
-        
+
         monitor = DownloadsMonitor(mock_logger)
 
         assert monitor.pkg_logger == mock_logger
@@ -27,7 +27,7 @@ class TestDownloadsMonitor:
         mock_logger = MagicMock()
         mock_logger.config = MagicMock()
         mock_logger.config.get.return_value = "~/Downloads"
-        
+
         monitor = DownloadsMonitor(mock_logger)
 
         assert monitor.pkg_logger == mock_logger
@@ -38,7 +38,7 @@ class TestDownloadsMonitor:
         mock_logger = MagicMock()
         mock_logger.config = MagicMock()
         mock_logger.config.get.return_value = "~/Downloads"
-        
+
         monitor = DownloadsMonitor(mock_logger)
 
         with patch("src.prez_pkglog.monitors.downloads.logger") as mock_logger_module:
@@ -54,7 +54,7 @@ class TestDownloadsMonitor:
         mock_logger = MagicMock()
         mock_logger.config = MagicMock()
         mock_logger.config.get.return_value = "~/Downloads"
-        
+
         monitor = DownloadsMonitor(mock_logger)
 
         with (
@@ -74,7 +74,7 @@ class TestDownloadsMonitor:
         mock_logger = MagicMock()
         mock_logger.config = MagicMock()
         mock_logger.config.get.return_value = "~/Downloads"
-        
+
         monitor = DownloadsMonitor(mock_logger)
 
         with (
@@ -98,7 +98,7 @@ class TestDownloadsMonitor:
         mock_logger = MagicMock()
         mock_logger.config = MagicMock()
         mock_logger.config.get.return_value = "~/Downloads"
-        
+
         monitor = DownloadsMonitor(mock_logger)
 
         # Should not raise any exception
@@ -110,7 +110,7 @@ class TestDownloadsMonitor:
         mock_logger = MagicMock()
         mock_logger.config = MagicMock()
         mock_logger.config.get.return_value = "~/Downloads"
-        
+
         monitor = DownloadsMonitor(mock_logger)
 
         with (
@@ -135,7 +135,7 @@ class TestDownloadsEventHandler:
         mock_logger = MagicMock()
         mock_logger.config = MagicMock()
         mock_logger.config.get.return_value = ".rpm,.deb,.pkg,.exe,.msi,.dmg"
-        
+
         handler = DownloadsEventHandler(mock_logger)
 
         assert handler.pkg_logger == mock_logger
@@ -145,7 +145,7 @@ class TestDownloadsEventHandler:
         mock_logger = MagicMock()
         mock_logger.config = MagicMock()
         mock_logger.config.get.return_value = ".rpm,.deb,.pkg,.exe,.msi,.dmg"
-        
+
         handler = DownloadsEventHandler(mock_logger)
 
         # Mock event
@@ -183,7 +183,7 @@ class TestDownloadsEventHandler:
         mock_logger = MagicMock()
         mock_logger.config = MagicMock()
         mock_logger.config.get.return_value = ".rpm,.deb,.pkg,.exe,.msi,.dmg"
-        
+
         handler = DownloadsEventHandler(mock_logger)
 
         # Mock event
@@ -201,7 +201,7 @@ class TestDownloadsEventHandler:
         mock_logger = MagicMock()
         mock_logger.config = MagicMock()
         mock_logger.config.get.return_value = ".rpm,.deb,.pkg,.exe,.msi,.dmg"
-        
+
         handler = DownloadsEventHandler(mock_logger)
 
         # Mock event
@@ -228,7 +228,7 @@ class TestDownloadsEventHandler:
         mock_logger = MagicMock()
         mock_logger.config = MagicMock()
         mock_logger.config.get.return_value = ".rpm,.deb,.pkg,.exe,.msi,.dmg"
-        
+
         handler = DownloadsEventHandler(mock_logger)
 
         package_extensions = [".rpm", ".deb", ".pkg", ".exe", ".msi", ".dmg"]
@@ -273,10 +273,10 @@ class TestDownloadsEventHandler:
         mock_logger = MagicMock()
         mock_logger.config = MagicMock()
         mock_logger.config.get.return_value = ".rpm,.deb,.pkg,.exe,.msi,.dmg"
-        
+
         handler = DownloadsEventHandler(mock_logger)
         # Test with logger set to None by mocking the attribute access
-        with patch.object(handler, 'pkg_logger', None):
+        with patch.object(handler, "pkg_logger", None):
             # Mock event
             mock_event = MagicMock()
             mock_event.is_directory = False
@@ -301,7 +301,7 @@ class TestDownloadsEventHandler:
         mock_logger = MagicMock()
         mock_logger.config = MagicMock()
         mock_logger.config.get.return_value = ".rpm,.deb,.pkg,.exe,.msi,.dmg"
-        
+
         handler = DownloadsEventHandler(mock_logger)
 
         # Mock event
@@ -318,19 +318,24 @@ class TestDownloadsEventHandler:
             mock_path_class.return_value = mock_path
 
             # Mock the actual Path creation inside the handler
-            with patch(
-                "src.prez_pkglog.monitors.downloads.Path", return_value=mock_path
-            ), patch("src.prez_pkglog.monitors.downloads.logger") as mock_logger_module:
+            with (
+                patch(
+                    "src.prez_pkglog.monitors.downloads.Path", return_value=mock_path
+                ),
+                patch(
+                    "src.prez_pkglog.monitors.downloads.logger"
+                ) as mock_logger_module,
+            ):
                 # Should not raise OSError - the current implementation handles stat errors
                 handler.on_created(mock_event)
-                
+
                 # Should log a warning about the stat error
                 mock_logger_module.warning.assert_called_once()
-                
+
                 # Should still call log_package with file_size=0
                 mock_logger.log_package.assert_called_once_with(
                     "test.rpm",
-                    "download", 
+                    "download",
                     "install",
                     metadata={
                         "file_path": "/home/user/Downloads/test.rpm",

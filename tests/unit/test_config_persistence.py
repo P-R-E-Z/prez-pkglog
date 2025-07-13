@@ -54,7 +54,9 @@ class TestConfigPersistence:
 class TestCLIScopePersistence:
     """Verify that CLI commands persist scope changes via Config.save()."""
 
-    @pytest.mark.parametrize("command", ["status", "daemon", "setup", "export", "install", "remove", "query"])
+    @pytest.mark.parametrize(
+        "command", ["status", "daemon", "setup", "export", "install", "remove", "query"]
+    )
     def test_cli_commands_call_save(self, command, tmp_path, monkeypatch):
         """Each CLI command should invoke Config.save() after setting scope."""
         from click.testing import CliRunner
@@ -82,7 +84,9 @@ class TestCLIScopePersistence:
 
             extra_patches = []
             if command == "daemon":
-                extra_patches.append(patch("src.prez_pkglog.monitors.downloads.DownloadsMonitor"))
+                extra_patches.append(
+                    patch("src.prez_pkglog.monitors.downloads.DownloadsMonitor")
+                )
                 extra_patches.append(patch("time.sleep", side_effect=KeyboardInterrupt))
 
             with contextlib.ExitStack() as stack:
@@ -92,4 +96,4 @@ class TestCLIScopePersistence:
                 runner.invoke(cli, args, catch_exceptions=False)
 
             # save() must have been called exactly once
-            assert cfg_instance.save.called 
+            assert cfg_instance.save.called

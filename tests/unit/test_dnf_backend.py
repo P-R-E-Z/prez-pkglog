@@ -35,20 +35,20 @@ class TestDnfBackend:
         mock_base = MagicMock()
         mock_sack = MagicMock()
         mock_query = MagicMock()
-        
+
         # Mock package objects
         mock_pkg1 = MagicMock()
         mock_pkg1.name = "package1"
         mock_pkg1.version = "1.0.0"
         mock_pkg1.arch = "x86_64"
         mock_pkg1.reponame = "fedora"
-        
+
         mock_pkg2 = MagicMock()
         mock_pkg2.name = "package2"
         mock_pkg2.version = "2.0.0"
         mock_pkg2.arch = "x86_64"
         mock_pkg2.reponame = "fedora"
-        
+
         mock_query.return_value = [mock_pkg1, mock_pkg2]
         mock_sack.query.return_value.installed.return_value = [mock_pkg1, mock_pkg2]
         mock_base.sack = mock_sack
@@ -92,7 +92,7 @@ class TestDnfBackend:
     def test_register_transaction_success(self):
         """Test successful transaction registration."""
         mock_dnf = MagicMock()
-        
+
         with (
             patch("src.prez_pkglog.backends.linux.dnf.dnf", mock_dnf),
             patch("shutil.which", return_value="/usr/bin/dnf"),
@@ -116,7 +116,7 @@ class TestDnfBackend:
     def test_register_transaction_no_logger(self):
         """Test transaction registration without logger."""
         mock_dnf = MagicMock()
-        
+
         with (
             patch("src.prez_pkglog.backends.linux.dnf.dnf", mock_dnf),
             patch("shutil.which", return_value="/usr/bin/dnf"),

@@ -30,7 +30,10 @@ class TestPackageLoggerLocking:
                     for i in range(entries_per_thread):
                         logger.log_package(f"pkg{tid}_{i}", "dnf", "install")
 
-                threads = [threading.Thread(target=worker, args=(t,)) for t in range(num_threads)]
+                threads = [
+                    threading.Thread(target=worker, args=(t,))
+                    for t in range(num_threads)
+                ]
                 for t in threads:
                     t.start()
                 for t in threads:
@@ -43,7 +46,9 @@ class TestPackageLoggerLocking:
                 # No temporary file should remain
                 assert not logger.json_file.with_suffix(".json.tmp").exists()
 
-    @pytest.mark.xfail(reason="Advisory file-locking on tmpfs may allow interleaved renames under extreme parallelism; acceptable for 0.5.0, revisit later.")
+    @pytest.mark.xfail(
+        reason="Advisory file-locking on tmpfs may allow interleaved renames under extreme parallelism; acceptable for 0.5.0, revisit later."
+    )
     def test_concurrent_json_writes_multiprocess(self, tmp_path: Path):
         """Multiple processes should be able to write concurrently thanks to file locks."""
 
@@ -82,4 +87,4 @@ class TestPackageLoggerLocking:
             cfg_main = Config()
             logger_main = PackageLogger(cfg_main)
         data = json.loads(logger_main.json_file.read_text())
-        assert len(data) == per_proc * proc_count 
+        assert len(data) == per_proc * proc_count

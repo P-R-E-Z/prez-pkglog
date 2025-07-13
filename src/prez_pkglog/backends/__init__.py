@@ -1,4 +1,5 @@
 """Package containing all package manager backends"""
+
 import importlib
 import pkgutil
 from pathlib import Path

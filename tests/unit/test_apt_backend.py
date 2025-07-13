@@ -48,7 +48,7 @@ class TestAptBackend:
             backend = AptBackend()
 
             mock_output = "package1\t1.0.0-1\tamd64\npackage2\t2.0.0-1\ti386\n"
-            
+
             with patch("subprocess.run") as mock_run:
                 mock_run.return_value = MagicMock(
                     stdout=mock_output,
@@ -60,14 +60,14 @@ class TestAptBackend:
                 assert len(packages) == 2
                 assert "package1" in packages
                 assert "package2" in packages
-                
+
                 # Check package1 details
                 pkg1 = packages["package1"]
                 assert pkg1.name == "package1"
                 assert pkg1.version == "1.0.0-1"
                 assert pkg1.architecture == "amd64"
                 assert pkg1.installed is True
-                
+
                 # Check package2 details
                 pkg2 = packages["package2"]
                 assert pkg2.name == "package2"
@@ -85,7 +85,7 @@ class TestAptBackend:
                 "libc6-dev\t2.31-0ubuntu9.9\tamd64\n"
                 "gcc-9-base\t9.4.0-1ubuntu1~20.04.1\tamd64\n"
             )
-            
+
             with patch("subprocess.run") as mock_run:
                 mock_run.return_value = MagicMock(
                     stdout=mock_output,
@@ -98,7 +98,7 @@ class TestAptBackend:
                 assert "python3-pip" in packages
                 assert "libc6-dev" in packages
                 assert "gcc-9-base" in packages
-                
+
                 # Check complex version handling
                 pip_pkg = packages["python3-pip"]
                 assert pip_pkg.version == "20.0.2-5ubuntu1.9"
@@ -125,7 +125,7 @@ class TestAptBackend:
 
             # Output with missing fields
             mock_output = "package1\t1.0.0\npackage2\npackage3\t2.0.0\tamd64\n"
-            
+
             with patch("subprocess.run") as mock_run:
                 mock_run.return_value = MagicMock(
                     stdout=mock_output,
@@ -133,7 +133,7 @@ class TestAptBackend:
                 )
 
                 packages = backend.get_installed_packages()
-                
+
                 # Should only include well-formed entries
                 assert "package3" in packages
                 assert len(packages) == 1
@@ -220,7 +220,7 @@ class TestAptBackend:
     def test_backend_inheritance(self):
         """Test that AptBackend inherits from PackageBackend."""
         from src.prez_pkglog.backends.base import PackageBackend
-        
+
         with patch("shutil.which", return_value="/usr/bin/dpkg"):
             backend = AptBackend()
             assert isinstance(backend, PackageBackend)
@@ -241,7 +241,7 @@ class TestAptBackend:
                 # Verify the command was called correctly
                 mock_run.assert_called_once()
                 call_args = mock_run.call_args[0][0]
-                
+
                 assert call_args[0] == "dpkg-query"
                 assert "-W" in call_args
                 assert "-f=${Package}\\t${Version}\\t${Architecture}\\n" in call_args
@@ -301,4 +301,4 @@ class TestAptBackend:
                 mock_logger.error.assert_called_once()
                 error_message = mock_logger.error.call_args[0][0]
                 assert "Failed to get installed packages" in error_message
-                assert "dpkg-query" in error_message 
+                assert "dpkg-query" in error_message

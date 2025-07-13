@@ -67,7 +67,7 @@ class TestConfig:
     def test_default_values(self):
         """Test that default configuration values are set correctly."""
         config = Config()
-        
+
         # Test default values based on actual implementation
         assert config.get("scope") == "user"
         assert config.get("enable_dnf_hooks") is True
@@ -80,7 +80,7 @@ class TestConfig:
         """Test the scope property."""
         config = Config()
         assert config.scope == "user"
-        
+
         config.set("scope", "system")
         assert config.scope == "system"
 
@@ -88,10 +88,10 @@ class TestConfig:
         """Test that configuration changes persist within the same instance."""
         config = Config()
         config.set("persistent_key", "persistent_value")
-        
+
         # Verify the value persists
         assert config.get("persistent_key") == "persistent_value"
-        
+
         # Modify the value
         config.set("persistent_key", "modified_value")
         assert config.get("persistent_key") == "modified_value"
@@ -100,10 +100,10 @@ class TestConfig:
         """Test that different Config instances are isolated."""
         config1 = Config()
         config2 = Config()
-        
+
         config1.set("isolated_key", "config1_value")
         config2.set("isolated_key", "config2_value")
-        
+
         assert config1.get("isolated_key") == "config1_value"
         assert config2.get("isolated_key") == "config2_value"
 
@@ -112,7 +112,7 @@ class TestConfig:
         config = Config()
         config.set("bool_true", True)
         config.set("bool_false", False)
-        
+
         assert config.get("bool_true") is True
         assert config.get("bool_false") is False
 
@@ -121,7 +121,7 @@ class TestConfig:
         config = Config()
         config.set("int_value", 42)
         config.set("float_value", 3.14)
-        
+
         assert config.get("int_value") == 42
         assert config.get("float_value") == 3.14
 
@@ -130,7 +130,7 @@ class TestConfig:
         config = Config()
         test_list = ["item1", "item2", "item3"]
         config.set("list_value", test_list)
-        
+
         assert config.get("list_value") == test_list
 
     def test_dict_values(self):
@@ -138,21 +138,21 @@ class TestConfig:
         config = Config()
         test_dict = {"key1": "value1", "key2": "value2"}
         config.set("dict_value", test_dict)
-        
+
         assert config.get("dict_value") == test_dict
 
     def test_none_values(self):
         """Test setting and getting None values."""
         config = Config()
         config.set("none_value", None)
-        
+
         assert config.get("none_value") is None
 
     def test_empty_string_values(self):
         """Test setting and getting empty string values."""
         config = Config()
         config.set("empty_string", "")
-        
+
         assert config.get("empty_string") == ""
 
     def test_config_with_environment_variables(self):
@@ -167,7 +167,7 @@ class TestConfig:
         """Test string representation of Config object."""
         config = Config()
         config.set("test_key", "test_value")
-        
+
         str_repr = str(config)
         assert "Config" in str_repr
         assert "user" in str_repr  # Should show scope
@@ -183,7 +183,7 @@ class TestConfig:
     def test_config_with_mocked_home(self, mock_home):
         """Test Config behavior with mocked home directory."""
         mock_home.return_value = Path("/mock/home")
-        
+
         config = Config()
         # The Config class doesn't directly use Path.home() in the current implementation,
         # but this test ensures compatibility if it's added later
@@ -193,26 +193,26 @@ class TestConfig:
         """Test that Config operations are thread-safe."""
         import threading
         import time
-        
+
         config = Config()
         results = []
-        
+
         def set_value(key, value):
             config.set(key, value)
             time.sleep(0.01)  # Small delay to increase chance of race condition
             results.append(config.get(key))
-        
+
         # Create multiple threads that set different values
         threads = []
         for i in range(10):
             thread = threading.Thread(target=set_value, args=(f"key_{i}", f"value_{i}"))
             threads.append(thread)
             thread.start()
-        
+
         # Wait for all threads to complete
         for thread in threads:
             thread.join()
-        
+
         # Verify all values were set correctly
         assert len(results) == 10
         for i in range(10):

@@ -31,7 +31,9 @@ class PkgLogger(dnf.Plugin):
         """Load the plugin configuration"""
         self.scope = "user"  # Default to user scope
         config_path = (
-            SYSTEM_CONFIG_PATH if Path("/etc/dnf/plugins").exists() else USER_CONFIG_PATH
+            SYSTEM_CONFIG_PATH
+            if Path("/etc/dnf/plugins").exists()
+            else USER_CONFIG_PATH
         )
 
         if config_path.exists():
@@ -65,7 +67,7 @@ class PkgLogger(dnf.Plugin):
                         "repo": pkg.reponame,
                         "epoch": pkg.epoch,
                     },
-                    )
+                )
             except Exception as e:
                 self.logger.error(f"Error logging package {pkg.name}: {e}")
 
