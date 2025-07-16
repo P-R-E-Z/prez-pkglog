@@ -8,9 +8,11 @@ License:    MIT
 URL:        https://github.com/P-R-E-Z/prez-pkglog
 Source0:    %{name}-%{version}.tar.gz
 
-BuildArch:  noarch
+# Contains a native C++ plugin (prez_pkglog.so) → package is now arch-specific.
+# BuildArch:  noarch
 
-BuildRequires:  pyproject-rpm-macros
+# Dependencies for building the libdnf5 C++ plugin
+BuildRequires:  cmake gcc-c++ libdnf5-devel dnf5-devel
 ## Only need pytest for upstream development; the RPM check phase will just
 # verify the package can be imported, so pytest isn’t required as a build dep.
 #BuildRequires:  python3dist(pytest)
@@ -41,8 +43,17 @@ sed -i 's/^license = "MIT"/license = { text = "MIT" }/' pyproject.toml
 %build
 %pyproject_wheel
 
+# ---------------------------------------------------------------------------
+# Build the native dnf5 plugin (C++/libdnf5)
+# ---------------------------------------------------------------------------
+%cmake -B build_dnf5_plugin -S dnf5-plugin
+%cmake_build --builddir build_dnf5_plugin
+
 %install
 %pyproject_install
+
+# Install the compiled dnf5 plugin
+%cmake_install --builddir build_dnf5_plugin
 
 # Test suite
 %check
@@ -76,6 +87,7 @@ install -D -m 0644 systemd-user/prez-pkglog.service %{buildroot}%{_userunitdir}/
 %{python3_sitelib}/prez_pkglog/
 %{python3_sitelib}/prez_pkglog-%{version}.dist-info/
 %{python3_sitelib}/dnf-plugins/prez_pkglog.py
+%{_libdir}/dnf5/plugins/prez_pkglog.so
 %{_sysconfdir}/dnf/plugins/prez_pkglog.conf
 %{_userunitdir}/prez-pkglog.service
 

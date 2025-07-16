@@ -29,7 +29,12 @@ class PkgLogger(dnf.Plugin):
         super().__init__(base, cli)
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self._load_config()
-        self.pkg_logger = PackageLogger(self.config)
+        # Initialize configuration for PackageLogger.  Name it *cfg* to avoid
+        # colliding with the ``config`` hook method that DNF calls during
+        # plugin initialisation.
+        self.cfg = Config()
+        self.cfg.set("scope", self.scope)
+        self.pkg_logger = PackageLogger(self.cfg)
 
     def _load_config(self) -> None:
         """Load the plugin configuration"""
@@ -50,9 +55,6 @@ class PkgLogger(dnf.Plugin):
             except Exception as e:
                 self.logger.error(f"Error loading config: {e}")
 
-        # Initialize config for PackageLogger
-        self.config = Config()
-        self.config.set("scope", self.scope)
 
     def _log_packages(self, packages: List[dnf.package.Package], action: str) -> None:
         """Log packages to prez-pkglog"""
