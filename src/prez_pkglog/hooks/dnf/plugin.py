@@ -1,4 +1,4 @@
-import dnf
+import dnf  # type: ignore
 from pathlib import Path
 import logging
 from typing import List, Optional
@@ -10,7 +10,11 @@ from prez_pkglog.logger import PackageLogger
 logger = logging.getLogger(__name__)
 
 # Constants
-PLUGIN_NAME = "prez_pkglogger"
+# The plugin name must match 1) this *module* filename (prez_pkglog.py) and 2)
+# the *.conf* file shipped under */etc/dnf/plugins/*.  Using the same string
+# everywhere ensures DNF can discover and enable the plugin when
+# ``enabled=1`` is set.
+PLUGIN_NAME = "prez_pkglog"
 USER_CONFIG_PATH = Path.home() / f".config/dnf/plugins/{PLUGIN_NAME}.conf"
 SYSTEM_CONFIG_PATH = Path(f"/etc/dnf/plugins/{PLUGIN_NAME}.conf")
 
@@ -84,5 +88,6 @@ class PkgLogger(dnf.Plugin):
             self._log_packages(list(self.base.transaction.remove_set), "remove")
 
 
-# Enable with: echo 'enabled=1' | sudo tee /etc/dnf/plugins/prez_pkglogger.conf
-# Add scope: echo 'scope=system' | sudo tee -a /etc/dnf/plugins/prez_pkglogger.conf
+# Enable with: echo 'enabled=1' | sudo tee /etc/dnf/plugins/prez_pkglog.conf
+# Optional: set the scope to *system* so logs go to /var/log/prez-pkglog
+#   echo 'scope=system' | sudo tee -a /etc/dnf/plugins/prez_pkglog.conf

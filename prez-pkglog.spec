@@ -57,8 +57,11 @@ except Exception as exc:
 print("Import OK")
 PY
 
-# Install DNF plugin
-install -D -m 0644 src/prez_pkglog/hooks/dnf/plugin.py %{buildroot}%{_prefix}/lib/dnf/plugins/prez_pkglog.py
+# Install DNF plugin where DNF looks for Python plugins.
+#   • %{python3_sitelib}/dnf-plugins/  (e.g. /usr/lib/python3.13/site-packages/dnf-plugins/)
+# Using the macro keeps it version-agnostic.
+install -D -m 0644 src/prez_pkglog/hooks/dnf/plugin.py \
+  %{buildroot}%{python3_sitelib}/dnf-plugins/prez_pkglog.py
 install -D -m 0644 config/prez_pkglog.conf %{buildroot}%{_sysconfdir}/dnf/plugins/prez_pkglog.conf
 
 # Install systemd user service
@@ -72,7 +75,7 @@ install -D -m 0644 systemd-user/prez-pkglog.service %{buildroot}%{_userunitdir}/
 %{_bindir}/prez-pkglog
 %{python3_sitelib}/prez_pkglog/
 %{python3_sitelib}/prez_pkglog-%{version}.dist-info/
-%{_prefix}/lib/dnf/plugins/prez_pkglog.py
+%{python3_sitelib}/dnf-plugins/prez_pkglog.py
 %{_sysconfdir}/dnf/plugins/prez_pkglog.conf
 %{_userunitdir}/prez-pkglog.service
 
