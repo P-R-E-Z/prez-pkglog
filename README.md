@@ -8,7 +8,7 @@
 
 ## **Use of AI on this project**
 
-I currently use AI to help me with initial scaffolding, library/module research, debugging within the Cursor IDE, and documentation. All other aspects of the code is done by me, keep in mind I do this for fun so keep your expectations low... lol. All non-AI development is done within the JetBrains IDE's and Neovim, by the way. Please feel free to comment on any mistakes you see in the documentation, learning and trying new things relevant to this project has been my priority so there may be mistakes done by the AI, but I do my best to look over anything I have it do for me. Just wanted to give transparency on it due to the nature of the project.
+I currently use AI to help me with initial scaffolding, library/module research, debugging within the Cursor IDE, and documentation. All other aspects of the code is done by me, keep in mind I do this for fun so keep your expectations low... lol.
 
 ---
 
