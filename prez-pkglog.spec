@@ -27,6 +27,7 @@ Requires:  python3dist(python-dotenv)
 Requires:  python3dist(rich)
 Requires:  python3dist(toml)
 Requires:  python3dist(watchdog)
+Requires: libdnf5-plugin-actions
 
 %global _pyproject_buildrequires_extra python-dnf python-watchdog python-appdirs python-rich python-click python-pydantic python-dotenv python-toml
 
@@ -63,10 +64,12 @@ install -D -m 0644 src/prez_pkglog/hooks/dnf/plugin.py \
   %{buildroot}%{python3_sitelib}/dnf-plugins/prez_pkglog.py
 install -D -m 0644 config/prez_pkglog.conf %{buildroot}%{_sysconfdir}/dnf/plugins/prez_pkglog.conf
 
-# Install DNF5 plugin configuration
+# Install DNF5 plugin configuration (DNF5 core)
 install -D -m 0644 config/prez_pkglog.conf %{buildroot}%{_sysconfdir}/dnf5/plugins/prez_pkglog.conf
-# Enable DNF5 Actions plugin
-install -D -m 0644 config/dnf5/actions.conf %{buildroot}%{_sysconfdir}/dnf5/plugins/actions.conf
+
+# Install Actions file into libdnf5-plugins config dir
+install -D -m 0644 libdnf5-plugin/dnf5-plugin/actions.d/prez_pkglog.actions \
+  %{buildroot}%{_sysconfdir}/dnf/libdnf5-plugins/actions.d/prez_pkglog.actions
 
 # Install systemd user service
 install -D -m 0644 systemd-user/prez-pkglog.service %{buildroot}%{_userunitdir}/prez-pkglog.service
@@ -98,9 +101,9 @@ PY
 %{python3_sitelib}/dnf-plugins/__pycache__/prez_pkglog.cpython-*.pyc
 %{_libdir}/dnf5/plugins/prez_pkglog.so
 %{_datadir}/libdnf5/plugins/actions.d/prez_pkglog.actions
+%{_sysconfdir}/dnf/libdnf5-plugins/actions.d/prez_pkglog.actions
 %{_sysconfdir}/dnf/plugins/prez_pkglog.conf
 %{_sysconfdir}/dnf5/plugins/prez_pkglog.conf
-%{_sysconfdir}/dnf5/plugins/actions.conf
 %{_userunitdir}/prez-pkglog.service
 %{_mandir}/man1/prez-pkglog.1*
 
