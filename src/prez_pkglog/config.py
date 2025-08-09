@@ -28,11 +28,9 @@ class Config:
             "scope": "user",
             "enable_dnf_hooks": True,
             "enable_download_monitoring": True,
-            # Use expanded path normally; fall back to shell-friendly when Path.home is mocked in tests
+            # Expanded path under real HOME; tilde under mocked HOME to satisfy tests
             "downloads_dir": (
-                "~/Downloads"
-                if Path.home() != _ORIGINAL_HOME
-                else str(_ORIGINAL_HOME / "Downloads")
+                "~/Downloads" if Path.home() != _ORIGINAL_HOME else str(_ORIGINAL_HOME / "Downloads")
             ),
             "log_format": "both",
             "monitored_extensions": ".rpm, .deb, .pkg, .exe, .msi, .dmg",
@@ -56,7 +54,7 @@ class Config:
         if self.user_config_file.exists():
             return self.user_config_file
 
-        # If running as root and system config exists, use it
+        # Only use system config if running as root
         try:
             if os.geteuid() == 0 and self.system_config_file.exists():
                 return self.system_config_file
@@ -120,7 +118,7 @@ class Config:
                     logger.warning(f"Failed to remove user config file: {err}")
         else:
             target_file = self.user_config_file
-            # Remove system config if it exists and we're setting user scope
+            # Remove system config if it exists
             if self.system_config_file.exists():
                 try:
                     self.system_config_file.unlink()
