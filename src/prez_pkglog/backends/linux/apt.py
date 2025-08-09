@@ -9,21 +9,12 @@ from typing import Any, ClassVar, final
 
 from ..base import PackageBackend, PackageInfo
 
-# Configure logging
 logger = logging.getLogger(__name__)
 
 
 @final
 class AptBackend(PackageBackend):
-    """
-    Backend for logging apt package transactions.
-    To enable, create a file at /etc/apt/apt.conf.d/99prez-pkglog
-    with the following:
-
-    DPkg::Post-Invoke {
-        "if [ -x /usr/local/bin/prez-pkglog-apt ]; then /usr/local/bin/prez-pkglog-apt; fi";
-    }
-    """
+    """Backend for logging apt package transactions."""
 
     name: ClassVar[str] = "apt"
 
@@ -48,9 +39,7 @@ class AptBackend(PackageBackend):
                 "-W",
                 "-f=${Package}\\t${Version}\\t${Architecture}\\n",
             ]
-            result = subprocess.run(
-                cmd, capture_output=True, text=True, check=True, timeout=30
-            )
+            result = subprocess.run(cmd, capture_output=True, text=True, check=True, timeout=30)
 
             packages: dict[str, PackageInfo] = {}
             for line in result.stdout.splitlines():
@@ -59,11 +48,9 @@ class AptBackend(PackageBackend):
                 try:
                     name, version, arch = line.strip().split("\t")
                 except ValueError:
-                    # Malformed line – log and skip
                     logger.debug("Skipping malformed dpkg-query line: %s", line)
                     continue
 
-                # Empty parsed values which would indicate a malformed entry
                 if not (name and version and arch):
                     logger.debug("Incomplete package information in line: %s", line)
                     continue

@@ -12,15 +12,16 @@ classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: System Administrators",
     "Intended Audience :: Developers",
-    "Intended Audience :: End Users",
+    "Intended Audience :: End Users/Desktop",
     "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
     "appdirs>=1.4.4",
+    "click>=8.2.1",
     "pydantic>=2",
     "python-dotenv>=1.1.1",
     "rich>=14.0.0",
-    "typer>=0.16.0",
+    "toml>=0.10.2",
     "watchdog>=6.0.0",
 ]
 
@@ -29,9 +30,6 @@ dev = [
     "black>=25.1.0",
     "build>=1.2.2.post1",
     "bump2version>=1.0.1",
-    "click>=8.2.1",
-    "flake8==7.0.0",
-    "pyproject-flake8>=7.0.0",
     "mypy>=1.16.1",
     "pre-commit>=4.2.0",
     "pytest>=8.4.1",
@@ -40,8 +38,8 @@ dev = [
     "ruff>=0.12.3",
     "setuptools>=80.9.0",
     "tito>=0.6.26",
-    "typer>=0.16.0",
     "types-python-dateutil>=2.9.0.20250516",
+    "types-toml>=0.10.8.20240106",
 ]
 
 [build-system]
@@ -54,21 +52,17 @@ prez-pkglog = "prez_pkglog.cli:cli"
 [tool.uv]
 default-groups = ["dev"]
 
-# ---------------- Lint configuration ----------------
+# Lint configuration
 [tool.ruff]
-line-length = 88             # keep Black’s default or raise it
+line-length = 100
 lint.select = ["E", "F", "W"]
-lint.ignore = ["E501"]              # ignore long lines
-
-[tool.flake8]
-max-line-length = 88
-extend-ignore = ["E501"]
+lint.ignore = ["E501"]
 
 [tool.black]
-line-length = 88
+line-length = 100
 
 [tool.mypy]
-ignore_missing_imports = true           # blanket
+ignore_missing_imports = true
 # or per-module:
 # [[tool.mypy.overrides]]
 # module = ["dnf", "toml"]

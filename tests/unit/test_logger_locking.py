@@ -30,10 +30,7 @@ class TestPackageLoggerLocking:
                     for i in range(entries_per_thread):
                         logger.log_package(f"pkg{tid}_{i}", "dnf", "install")
 
-                threads = [
-                    threading.Thread(target=worker, args=(t,))
-                    for t in range(num_threads)
-                ]
+                threads = [threading.Thread(target=worker, args=(t,)) for t in range(num_threads)]
                 for t in threads:
                     t.start()
                 for t in threads:

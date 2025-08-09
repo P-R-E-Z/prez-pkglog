@@ -5,16 +5,21 @@ from __future__ import annotations
 import logging
 import shutil
 from pathlib import Path
-from typing import Any, ClassVar, final, Optional
+from typing import Any, ClassVar, final, Optional, TYPE_CHECKING
 
-try:
-    import dnf
-except ImportError:
-    dnf = None
+if TYPE_CHECKING:
+    try:
+        import dnf  # type: ignore[import-untyped]
+    except ImportError:
+        dnf = None
+else:
+    try:
+        import dnf  # type: ignore[import-untyped]
+    except ImportError:
+        dnf = None
 
 from ..base import PackageBackend, PackageInfo
 
-# Configure logging
 logger = logging.getLogger(__name__)
 
 
@@ -63,12 +68,12 @@ class DnfBackend(PackageBackend):
         Returns:
             Dictionary mapping package names to PackageInfo objects
         """
-        if not self.enabled:
+        if not self.enabled or dnf is None:
             return {}
 
         packages: dict[str, PackageInfo] = {}
         try:
-            with dnf.Base() as base:
+            with dnf.Base() as base:  # type: ignore[union-attr]
                 base.fill_sack()
                 q = base.sack.query().installed()
                 for pkg in q:
@@ -99,12 +104,10 @@ class DnfBackend(PackageBackend):
 
         success = True
 
-        # Log installed packages
         for pkg in getattr(transaction, "install_set", []):
             if not self._log_package_install(pkg):
                 success = False
 
-        # Log removed packages
         for pkg in getattr(transaction, "remove_set", []):
             if not self._log_package_remove(pkg):
                 success = False
@@ -141,9 +144,7 @@ class DnfBackend(PackageBackend):
             return True
 
         except Exception as e:
-            logger.error(
-                f"Error logging package install {getattr(pkg, 'name', 'unknown')}: {e}"
-            )
+            logger.error(f"Error logging package install {getattr(pkg, 'name', 'unknown')}: {e}")
             return False
 
     def _log_package_remove(self, pkg: Any) -> bool:
@@ -176,10 +177,5 @@ class DnfBackend(PackageBackend):
             return True
 
         except Exception as e:
-            logger.error(
-                f"Error logging package removal {getattr(pkg, 'name', 'unknown')}: {e}"
-            )
+            logger.error(f"Error logging package removal {getattr(pkg, 'name', 'unknown')}: {e}")
             return False
-
-
-# Registration will be handled by __init__.py

@@ -26,8 +26,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           # install project and test deps
-          pip install .
+          pip install -e .
           pip install pytest pytest-cov
 
       - name: Run tests
-        run: pytest -q 
+        run: pytest -q
+
+      - name: Run tests with coverage
+        run: pytest --cov=src/prez_pkglog --cov-report=xml 

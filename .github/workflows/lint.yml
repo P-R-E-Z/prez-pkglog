@@ -26,13 +26,19 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install black 'flake8==7.0.0' pyproject-flake8 mypy
+          pip install ruff black mypy
 
       - name: Run Black (code style)
-        run: black --check .
+        run: black --check src/
 
-      - name: Run Flake8 (lint)
-        run: pflake8 src tests
+      - name: Run Ruff (lint)
+        run: ruff check src/
 
       - name: Run mypy (type-checking)
-        run: mypy src 
+        run: mypy src/
+
+      - name: Check C++ formatting
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-tools
+          clang-format --dry-run --Werror libdnf5-plugin/dnf5-plugin/src/*.cpp || exit 1 

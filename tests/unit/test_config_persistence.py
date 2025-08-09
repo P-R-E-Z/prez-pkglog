@@ -81,13 +81,14 @@ class TestCLIScopePersistence:
             if command == "query":
                 args += ["--name", "sample"]
             # Ensure explicit scope flag
-            args += ["--scope", "user"]
+            if command == "setup":
+                args += ["--setup", "user"]
+            else:
+                args += ["--scope", "user"]
 
             extra_patches = []
             if command == "daemon":
-                extra_patches.append(
-                    patch("src.prez_pkglog.monitors.downloads.DownloadsMonitor")
-                )
+                extra_patches.append(patch("src.prez_pkglog.monitors.downloads.DownloadsMonitor"))
                 extra_patches.append(patch("time.sleep", side_effect=KeyboardInterrupt))
 
             with contextlib.ExitStack() as stack:

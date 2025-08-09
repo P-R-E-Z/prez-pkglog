@@ -5,16 +5,56 @@ import datetime as dt
 import json
 
 
+def get_default_scope() -> str:
+    """Get the default scope from configuration, falling back to 'user' if not configured.
+
+    Checks system config first, then user config.
+    """
+    import json
+    from pathlib import Path
+
+    # Check system config first
+    system_config = Path("/etc/prez-pkglog/prez-pkglog.conf")
+    if system_config.exists():
+        try:
+            data = json.loads(system_config.read_text())
+            if isinstance(data, dict) and data.get("scope") == "system":
+                return "system"
+        except (OSError, json.JSONDecodeError):
+            pass
+
+    # If running as root, default to system scope
+    try:
+        import os as _os
+
+        if _os.geteuid() == 0:
+            return "system"
+    except Exception:
+        pass
+
+    # Check user config
+    user_config = Path.home() / ".config/prez-pkglog/prez-pkglog.conf"
+    if user_config.exists():
+        try:
+            data = json.loads(user_config.read_text())
+            if isinstance(data, dict):
+                return data.get("scope", "user")
+        except (OSError, json.JSONDecodeError):
+            pass
+
+    # Default fallback
+    return "user"
+
+
 def require_sudo_for_system_scope(f):
     @wraps(f)
     def decorated_function(scope, *args, **kwargs):
         """Wrapper that ensures proper privilege for system scope."""
         if scope == "system" and os.geteuid() != 0:
             click.echo("Error: System scope requires administrative privileges.")
-            click.echo("Run with sudo or use --scope user.")
-            return
+            click.echo("Falling back to user scope. Run with sudo or use --scope user.")
+            scope = "user"
 
-        # Forward original positional args untouched; provide scope explicitly
         return f(*args, scope=scope, **kwargs)
 
     return decorated_function
@@ -28,9 +68,35 @@ def cli():
 
 @cli.command()
 @click.option(
+    "--setup",
+    "scope",
+    type=click.Choice(["user", "system"]),
+    help="Setup configuration and directories",
+    default=get_default_scope,
+    show_default=True,
+)
+@require_sudo_for_system_scope
+def setup(scope):
+    """Setup configuration and directories"""
+    from .config import Config
+    from .logger import PackageLogger
+
+    config = Config()
+    config.set("scope", scope)
+    config.save()
+
+    logger = PackageLogger(config)
+
+    click.echo(f"Setup complete for {scope} scope.")
+    click.echo(f"Log directory created at: {logger.data_dir}")
+    click.echo(f"Configuration saved to: {config.config_file}")
+
+
+@cli.command()
+@click.option(
     "--scope",
     type=click.Choice(["user", "system"]),
-    default="user",
+    default=get_default_scope,
     help="Logging scope",
 )
 @require_sudo_for_system_scope
@@ -58,7 +124,7 @@ def status(scope):
 @click.option(
     "--scope",
     type=click.Choice(["user", "system"]),
-    default="user",
+    default=get_default_scope,
     help="Logging scope",
 )
 @require_sudo_for_system_scope
@@ -75,7 +141,6 @@ def daemon(scope):
 
     logger = PackageLogger(config)
 
-    # Only start download monitoring if in user scope
     if scope == "user":
         monitor = DownloadsMonitor(logger)
         try:
@@ -101,7 +166,7 @@ def daemon(scope):
 @click.option(
     "--scope",
     type=click.Choice(["user", "system"]),
-    default="user",
+    default=get_default_scope,
     help="Logging scope",
 )
 @click.option("--format", default="json", type=click.Choice(["json", "toml"]))
@@ -124,36 +189,12 @@ def export(scope, format):
 
 
 @cli.command()
-@click.option(
-    "--scope",
-    type=click.Choice(["user", "system"]),
-    default="user",
-    help="Logging scope",
-)
-@require_sudo_for_system_scope
-def setup(scope):
-    """Setup configuration and directories"""
-    from .config import Config
-    from .logger import PackageLogger
-
-    config = Config()
-    config.set("scope", scope)
-    config.save()
-
-    logger = PackageLogger(config)
-
-    click.echo(f"Setup complete for {scope} scope.")
-    click.echo(f"Log directory created at: {logger.data_dir}")
-    click.echo(f"Configuration saved to: {config.config_file}")
-
-
-@cli.command()
 @click.argument("name")
 @click.argument("manager")
 @click.option(
     "--scope",
     type=click.Choice(["user", "system"]),
-    default="user",
+    default=get_default_scope,
     help="Logging scope",
 )
 @require_sudo_for_system_scope
@@ -176,7 +217,7 @@ def install(name, manager, scope):
 @click.option(
     "--scope",
     type=click.Choice(["user", "system"]),
-    default="user",
+    default=get_default_scope,
     help="Logging scope",
 )
 @require_sudo_for_system_scope
@@ -200,7 +241,7 @@ def remove(name, manager, scope):
 @click.option(
     "--scope",
     type=click.Choice(["user", "system"]),
-    default="user",
+    default=get_default_scope,
     help="Logging scope",
 )
 @require_sudo_for_system_scope
@@ -224,7 +265,6 @@ def query(name, manager, days, scope):
         click.echo("No results found.")
         return
 
-    # Pretty print results
     for res in results:
         res_str = json.dumps(res, indent=2)
         click.echo(res_str)

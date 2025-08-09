@@ -32,7 +32,7 @@ class TestCLI:
             mock_logger.data_dir = "/tmp/test"
             mock_logger_class.return_value = mock_logger
 
-            result = self.runner.invoke(cli, ["setup", "--scope", "user"])
+            result = self.runner.invoke(cli, ["setup", "--setup", "user"])
 
             assert result.exit_code == 0
             assert "Setup complete for user scope" in result.output
@@ -52,7 +52,7 @@ class TestCLI:
             mock_logger.data_dir = "/var/log/test"
             mock_logger_class.return_value = mock_logger
 
-            result = self.runner.invoke(cli, ["setup", "--scope", "system"])
+            result = self.runner.invoke(cli, ["setup", "--setup", "system"])
 
             assert result.exit_code == 0
             assert "Setup complete for system scope" in result.output
@@ -60,7 +60,7 @@ class TestCLI:
 
     def test_setup_invalid_scope(self):
         """Test setup command with invalid scope."""
-        result = self.runner.invoke(cli, ["setup", "--scope", "invalid"])
+        result = self.runner.invoke(cli, ["setup", "--setup", "invalid"])
 
         assert result.exit_code != 0
         assert "Invalid value" in result.output
@@ -119,9 +119,7 @@ class TestCLI:
             mock_logger.json_file.read_text.return_value = '[{"name": "test"}]'
             mock_logger_class.return_value = mock_logger
 
-            result = self.runner.invoke(
-                cli, ["export", "--format", "json", "--scope", "user"]
-            )
+            result = self.runner.invoke(cli, ["export", "--format", "json", "--scope", "user"])
 
             assert result.exit_code == 0
             assert '{"name": "test"}' in result.output
@@ -134,18 +132,14 @@ class TestCLI:
             mock_logger.toml_file.read_text.return_value = "# Test package"
             mock_logger_class.return_value = mock_logger
 
-            result = self.runner.invoke(
-                cli, ["export", "--format", "toml", "--scope", "user"]
-            )
+            result = self.runner.invoke(cli, ["export", "--format", "toml", "--scope", "user"])
 
             assert result.exit_code == 0
             assert "# Test package" in result.output
 
     def test_export_invalid_format(self):
         """Test export command with invalid format."""
-        result = self.runner.invoke(
-            cli, ["export", "--format", "invalid", "--scope", "user"]
-        )
+        result = self.runner.invoke(cli, ["export", "--format", "invalid", "--scope", "user"])
 
         assert result.exit_code != 0
         assert "Invalid value" in result.output
@@ -154,9 +148,7 @@ class TestCLI:
         """Test daemon command with user scope."""
         with (
             patch("src.prez_pkglog.logger.PackageLogger") as mock_logger_class,
-            patch(
-                "src.prez_pkglog.monitors.downloads.DownloadsMonitor"
-            ) as mock_monitor_class,
+            patch("src.prez_pkglog.monitors.downloads.DownloadsMonitor") as mock_monitor_class,
         ):
             mock_logger = MagicMock()
             mock_logger_class.return_value = mock_logger

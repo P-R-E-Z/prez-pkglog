@@ -9,20 +9,12 @@ from typing import Any, ClassVar, final
 
 from ..base import PackageBackend, PackageInfo
 
-# Configure logging
 logger = logging.getLogger(__name__)
 
 
 @final
 class WingetBackend(PackageBackend):
-    """
-    Backend for logging Winget package transactions.
-
-    Winget does not currently have a hook or scriptable event system.
-    A contributor could potentially implement logging by either:
-    1. Creating a PowerShell wrapper function for `winget`.
-    2. Periodically polling and diffing the output of `winget list`.
-    """
+    """Backend for logging Winget package transactions."""
 
     name: ClassVar[str] = "winget"
 
@@ -44,24 +36,17 @@ class WingetBackend(PackageBackend):
         try:
             # --accept-source-agreements is needed for first run
             cmd = ["winget", "list", "--accept-source-agreements"]
-            result = subprocess.run(
-                cmd, capture_output=True, text=True, check=True, timeout=120
-            )
+            result = subprocess.run(cmd, capture_output=True, text=True, check=True, timeout=120)
 
             packages: dict[str, PackageInfo] = {}
-            # Skip the header lines of the output
             for line in result.stdout.splitlines()[2:]:
                 if not line or line.startswith("---"):
                     continue
-                # Winget's output is column-based and can be tricky.
-                # This is a best-effort parse.
                 parts = [p for p in line.split(" ") if p]
                 if len(parts) >= 2:
                     name = parts[0]
                     version = parts[1]
-                    packages[name] = PackageInfo(
-                        name=name, version=version, installed=True
-                    )
+                    packages[name] = PackageInfo(name=name, version=version, installed=True)
             return packages
         except (subprocess.SubprocessError, FileNotFoundError, OSError) as e:
             logger.error(f"Failed to get installed packages using winget: {e}")

@@ -6,6 +6,12 @@
 
 ---
 
+## **Use of AI on this project**
+
+I currently use AI to help me with initial scaffolding, library/module research, debugging within the Cursor IDE, and documentation. All other aspects of the code is done by me, keep in mind I do this for fun so keep your expectations low... lol. All non-AI development is done within the JetBrains IDE's and Neovim, by the way. Please feel free to comment on any mistakes you see in the documentation, learning and trying new things relevant to this project has been my priority so there may be mistakes done by the AI, but I do my best to look over anything I have it do for me. Just wanted to give transparency on it due to the nature of the project.
+
+---
+
 ## Table of Contents
 
 1. [Features](#features)
@@ -35,11 +41,13 @@
 
 6. [Shell Integration](#shell-integration)
 7. [Log File Examples](#log-file-examples)
-8. [Contributing](CONTRIBUTING.md)
+8. [TODO List](TODO.md)
+9. [Contributing](CONTRIBUTING.md)
 
 ## Features
 
-- **Zero-maintenance Hooks** - hooks directly into DNF; no polling required.
+- **Zero-maintenance Hooks** - hooks directly into DNF4 and DNF5; no polling required.
+- **Native DNF5 Plugin** - C++ plugin for DNF5 with automatic transaction logging.
 - **Dual Log Formats** - automatically mirrors entries to `packages.json` and `packages.toml` files.
 - **Modular Backends** - easily extendable with backends for APT, Pacman, Homebrew, etc.
 - **Append-Only History** - entries are never deleted; removals are flagged as removed.
@@ -50,7 +58,6 @@
 ---
 
 ## Installation
-
 
 Package builds will soon be available from my Copr repository.  Until then:
 
@@ -72,6 +79,50 @@ You can now enable the download-monitoring service:
 ```bash
 systemctl --user daemon-reload   # first time only
 systemctl --user enable --now prez-pkglog.service
+```
+
+### DNF5 Plugin Installation
+
+The RPM package includes a native C++ plugin for DNF5 that provides automatic package logging via the DNF5 Actions Plugin system.
+
+#### Automatic Installation (RPM)
+
+When you install the RPM package, the DNF5 plugin is automatically:
+
+1. **Built** using CMake with libdnf5 dependencies
+2. **Installed** to `/usr/lib64/dnf5/plugins/prez_pkglog.so`
+3. **Configured** with Actions Plugin hooks at `/usr/share/libdnf5/plugins/actions.d/prez_pkglog.actions`
+4. **Enabled** by default for automatic transaction logging
+
+#### Manual Installation
+
+If you're building from source or need to install manually:
+
+```bash
+# Install build dependencies
+sudo dnf install cmake gcc-c++ libdnf5-devel pkgconfig
+
+# Build and install the plugin
+cd libdnf5-plugin/dnf5-plugin
+mkdir build && cd build
+cmake ..
+make
+sudo make install
+```
+
+#### Plugin Verification
+
+Verify the plugin is working:
+
+```bash
+# Check DNF5 version
+dnf5 --version
+
+# Test plugin loading (should show no errors)
+dnf5 list installed | head -5
+
+# Check if transactions are being logged
+prez-pkglog status
 ```
 
 ### (Optional) DIY hooks for other package managers
@@ -138,7 +189,8 @@ For Homebrew, Chocolatey and Winget, use manual logging or adapt the examples ab
 
 | Package manager | Status | Setup |
 |-----------------|--------|-------|
-| **DNF** (Fedora/RHEL) | Automatic logging via plugin | See [DNF Plugin Configuration](#dnf-plugin-configuration) and the *Start&nbsp;Monitoring* section. The RPM installs `/usr/lib/dnf/plugins/prez_pkglog.py` and a sample config; enable it with `enabled=1` and restart DNF. |
+| **DNF4** (Fedora/RHEL) | Automatic logging via Python plugin | See [DNF Plugin Configuration](#dnf-plugin-configuration). The RPM installs `/usr/lib/python3.*/site-packages/dnf-plugins/prez_pkglog.py` and a sample config; enable it with `enabled=1`. |
+| **DNF5** (Fedora/RHEL) | Automatic logging via native C++ plugin | See [DNF Plugin Configuration](#dnf-plugin-configuration). The RPM installs `/usr/lib64/dnf5/plugins/prez_pkglog.so` and is enabled by default. |
 | **APT** (Debian/Ubuntu) | Planned | Parser exists (`apt.py`), but no hook yet. A `DPkg::Post-Invoke` script is needed. Help welcome → [Contributing](CONTRIBUTING.md) |
 | **Pacman** (Arch) | Planned | Parser exists (`pacman.py`). Needs an `alpm` hook (`/etc/pacman.d/hooks/prez-pkglog.hook`). See [Contributing](CONTRIBUTING.md) |
 
@@ -173,34 +225,39 @@ See the [Contributing guide](CONTRIBUTING.md) if you’d like to help wire up th
 
 User scope logs packages for the current user only. Files are stored in `~/.local/share/prez-pkglog/`.
 
-**Configuration file**: `~/.config/prez-pkglog/prez_pkglog.conf`
+**Configuration file**: `~/.config/prez-pkglog/prez-pkglog.conf`
 
-```ini
-[main]
-scope = user
-enable_dnf_hooks = true
-enable_download_monitoring = true
-downloads_dir = ~/Downloads
-monitored_extensions = .rpm, .deb, .pkg.tar.zst, .tar.gz, .zip, .AppImage
-log_format = both
+```json
+{
+  "scope": "user",
+  "enable_dnf_hooks": true,
+  "enable_download_monitoring": true,
+  "downloads_dir": "~/Downloads",
+  "monitored_extensions": ".rpm, .deb, .pkg, .exe, .msi, .dmg",
+  "log_format": "both"
+}
 ```
 
 ### System Scope (Requires Administrator)
 
 System scope logs packages system-wide. Files are stored in `/var/log/prez-pkglog/`.
 
-**Configuration file**: `/etc/prez-pkglog/prez_pkglog.conf`
+**Configuration file**: `/etc/prez-pkglog/prez-pkglog.conf`
 
-```ini
-[main]
-scope = system
-enable_dnf_hooks = true
-enable_download_monitoring = false
-# downloads_dir and monitored_extensions are ignored in system scope
-log_format = both
+```json
+{
+  "scope": "system",
+  "enable_dnf_hooks": true,
+  "enable_download_monitoring": false,
+  "log_format": "both"
+}
 ```
 
 ### DNF Plugin Configuration
+
+prez-pkglog includes both a Python plugin for DNF4 and a native C++ plugin for DNF5.
+
+#### DNF4 (Python Plugin)
 
 **User scope**: `~/.config/dnf/plugins/prez_pkglog.conf`
 
@@ -217,6 +274,36 @@ scope = user
 enabled = 1
 scope = system
 ```
+
+#### DNF5 (Native C++ Plugin)
+
+The DNF5 plugin is automatically installed to `/usr/lib64/dnf5/plugins/prez_pkglog.so` and is enabled by default.
+
+**User scope**: `~/.config/dnf5/plugins/prez_pkglog.conf`
+
+```ini
+[main]
+enabled = 1
+scope = user
+```
+
+**System scope**: `/etc/dnf5/plugins/prez_pkglog.conf`
+
+```ini
+[main]
+enabled = 1
+scope = system
+```
+
+#### Troubleshooting DNF5 vs DNF4
+
+- **DNF5 plugin not loading**: Ensure you're using DNF5 (`dnf5 --version`) and the plugin is installed to `/usr/lib64/dnf5/plugins/`
+- **DNF4 plugin not loading**: Ensure you're using DNF4 (`dnf --version`) and the plugin is installed to `/usr/lib/python3.*/site-packages/dnf-plugins/`
+- **Both plugins installed**: The system will use the appropriate plugin based on which DNF version you're running
+- **Plugin conflicts**: Only one plugin should be active at a time; the Python plugin is for DNF4, the C++ plugin is for DNF5
+- **DNF5 transactions not logged**: Check that the Actions Plugin file at `/usr/share/libdnf5/plugins/actions.d/prez_pkglog.actions` exists and has no trailing characters
+- **Scope detection issues**: Run `sudo prez-pkglog setup` to properly configure system scope, or use `prez-pkglog setup` for user scope
+- **Configuration conflicts**: Ensure only one config file exists - either system (`/etc/prez-pkglog/`) or user (`~/.config/prez-pkglog/`)
 
 ---
 
@@ -253,6 +340,10 @@ systemctl --user daemon-reload
 # 2. Enable + start the logger – this will automatically create
 #    ~/.config/systemd/user/ if it does not already exist.
 systemctl --user enable --now prez-pkglog.service
+
+# Note: The systemd service includes security hardening that restricts
+# access to only the log directory and Downloads folder. If you use a
+# custom downloads directory, you may need to modify the service file.
 
 # Optional: keep the service running even after logging out
 sudo loginctl enable-linger "$USER"
@@ -409,7 +500,7 @@ file_type = ".tar.bz2"
 - **Log files**: `~/.local/share/prez-pkglog/`
   - `packages.json`
   - `packages.toml`
-- **Configuration**: `~/.config/prez-pkglog/prez_pkglog.conf`
+- **Configuration**: `~/.config/prez-pkglog/prez-pkglog.conf`
 - **DNF plugin config**: `~/.config/dnf/plugins/prez_pkglog.conf`
 
 ### System Scope
@@ -417,7 +508,7 @@ file_type = ".tar.bz2"
 - **Log files**: `/var/log/prez-pkglog/`
   - `packages.json`
   - `packages.toml`
-- **Configuration**: `/etc/prez-pkglog/prez_pkglog.conf`
+- **Configuration**: `/etc/prez-pkglog/prez-pkglog.conf`
 - **DNF plugin config**: `/etc/dnf/plugins/prez_pkglog.conf`
 
 ---

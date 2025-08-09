@@ -115,8 +115,7 @@ class PackageBackend(abc.ABC):
         return [
             pkg
             for name, pkg in installed.items()
-            if query in name.lower()
-            or (pkg.description and query in pkg.description.lower())
+            if query in name.lower() or (pkg.description and query in pkg.description.lower())
         ]
 
     def get_package_files(self, package_name: str) -> list[str]:

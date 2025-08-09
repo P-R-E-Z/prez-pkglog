@@ -2,5 +2,7 @@ include LICENSE
 include README.md
 include CONTRIBUTING.md
 include config/prez_pkglog.conf
+include config/dnf5/actions.conf
 include systemd-user/prez-pkglog.service
-recursive-include docs/man * 
+recursive-include docs/man *
+recursive-include libdnf5-plugin * 

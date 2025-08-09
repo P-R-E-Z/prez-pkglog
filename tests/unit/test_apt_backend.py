@@ -157,9 +157,7 @@ class TestAptBackend:
             backend = AptBackend()
 
             with patch("subprocess.run") as mock_run:
-                mock_run.side_effect = subprocess.TimeoutExpired(
-                    cmd=["dpkg-query"], timeout=30
-                )
+                mock_run.side_effect = subprocess.TimeoutExpired(cmd=["dpkg-query"], timeout=30)
 
                 packages = backend.get_installed_packages()
                 assert packages == {}

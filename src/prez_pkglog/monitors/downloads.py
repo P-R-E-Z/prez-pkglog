@@ -4,8 +4,6 @@ import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional
 
-# Assume watchdog is unavailable until proven otherwise so that the
-# constant is defined for both runtime *and* static-analysis passes.
 WATCHDOG_AVAILABLE = False
 
 if TYPE_CHECKING:
@@ -110,12 +108,8 @@ class DownloadsEventHandler(FileSystemEventHandler):
         """Log a downloaded file"""
         path = Path(file_path)
 
-        ext_str = self.config.get(
-            "monitored_extensions", ".rpm,.deb,.pkg,.exe,.msi,.dmg"
-        )
-        package_extensions = {
-            f".{ext.strip().lstrip('.')}" for ext in ext_str.split(",")
-        }
+        ext_str = self.config.get("monitored_extensions", ".rpm,.deb,.pkg,.exe,.msi,.dmg")
+        package_extensions = {f".{ext.strip().lstrip('.')}" for ext in ext_str.split(",")}
 
         if path.suffix.lower() in package_extensions:
             if self.pkg_logger:

@@ -9,33 +9,12 @@ from typing import Any, ClassVar, final
 
 from ..base import PackageBackend, PackageInfo
 
-# Configure logging
 logger = logging.getLogger(__name__)
 
 
 @final
 class BrewBackend(PackageBackend):
-    """
-    Backend for logging Homebrew package transactions.
-
-    Homebrew does not have a traditional post-transaction hook system.
-    Automatic logging can be achieved by creating a shell wrapper
-    function for `brew`. Add this to your ~/.zshrc or ~/.bash_profile:
-
-    function brew() {
-        case "$1" in
-            install|uninstall|reinstall|upgrade)
-                command brew "$@"
-                # This part requires a separate script to parse brew's
-                # actions and call `prez-pkglog`.
-                /usr/local/bin/prez-pkglog-brew-hook
-                ;;
-            *)
-                command brew "$@"
-                ;;
-        esac
-    }
-    """
+    """Backend for logging Homebrew package transactions."""
 
     name: ClassVar[str] = "brew"
 
@@ -57,15 +36,12 @@ class BrewBackend(PackageBackend):
         try:
             # --formula is used to list only formulae, not casks
             cmd = ["brew", "list", "--formula", "--versions"]
-            result = subprocess.run(
-                cmd, capture_output=True, text=True, check=True, timeout=30
-            )
+            result = subprocess.run(cmd, capture_output=True, text=True, check=True, timeout=30)
 
             packages: dict[str, PackageInfo] = {}
             for line in result.stdout.splitlines():
                 if not line:
                     continue
-                # Output is like "neovim 0.7.2", "python@3.10 3.10.6"
                 name, version = line.strip().rsplit(" ", 1)
                 packages[name] = PackageInfo(name=name, version=version, installed=True)
             return packages

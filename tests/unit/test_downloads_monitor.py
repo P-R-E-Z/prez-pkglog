@@ -249,9 +249,7 @@ class TestDownloadsEventHandler:
                 mock_path.suffix.lower.return_value = ext
                 mock_path.name = f"test{ext}"
                 mock_path.stat.return_value.st_size = 1024
-                mock_path.__str__ = MagicMock(
-                    return_value=f"/home/user/Downloads/test{ext}"
-                )
+                mock_path.__str__ = MagicMock(return_value=f"/home/user/Downloads/test{ext}")
                 mock_path_class.return_value = mock_path
 
                 # Mock the actual Path creation inside the handler
@@ -328,9 +326,7 @@ class TestDownloadsEventHandler:
                     "src.prez_pkglog.monitors.downloads.Path",
                     return_value=mock_path,
                 ),
-                patch(
-                    "src.prez_pkglog.monitors.downloads.logger"
-                ) as mock_logger_module,
+                patch("src.prez_pkglog.monitors.downloads.logger") as mock_logger_module,
             ):
                 # Should not raise OSError - the current implementation handles stat errors
                 handler.on_created(mock_event)

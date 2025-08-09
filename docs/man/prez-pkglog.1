@@ -8,7 +8,7 @@ prez-pkglog \- a local package installation and removal logger
 [\fIOPTIONS\fR] \fICOMMAND\fR [\fIARGS\fR]...
 
 .SH DESCRIPTION
-\fBprez-pkglog\fR is a cross-distro/platform package-activity logger that records every install and removal event on your system. It supports multiple package managers and can monitor a downloads folder, writing an append-only history in both JSON and TOML.
+\fBprez-pkglog\fR is a cross-distro/platform package-activity logger that records every install and removal event on your system. It supports multiple package managers (DNF4, DNF5, APT, Pacman, etc.) and can monitor a downloads folder, writing an append-only history in both JSON and TOML. The tool includes native plugins for DNF4 (Python) and DNF5 (C++) for automatic transaction logging.
 
 .SH COMMANDS
 .TP
@@ -86,11 +86,29 @@ User-specific configuration file.
 \fB/etc/prez-pkglog/prez_pkglog.conf\fR
 System-wide configuration file.
 .TP
+\fB~/.config/dnf/plugins/prez_pkglog.conf\fR
+DNF4 plugin configuration (user scope).
+.TP
+\fB/etc/dnf/plugins/prez_pkglog.conf\fR
+DNF4 plugin configuration (system scope).
+.TP
+\fB~/.config/dnf5/plugins/prez_pkglog.conf\fR
+DNF5 plugin configuration (user scope).
+.TP
+\fB/etc/dnf5/plugins/prez_pkglog.conf\fR
+DNF5 plugin configuration (system scope).
+.TP
 \fB~/.local/share/prez-pkglog/\fR
 Directory for user-specific log files (packages.json, packages.toml).
 .TP
 \fB/var/log/prez-pkglog/\fR
 Directory for system-wide log files.
+.TP
+\fB/usr/lib/python3.*/site-packages/dnf-plugins/prez_pkglog.py\fR
+DNF4 Python plugin.
+.TP
+\fB/usr/lib64/dnf5/plugins/prez_pkglog.so\fR
+DNF5 native C++ plugin.
 
 .SH AUTHOR
 Prez <154857421+P-R-E-Z@users.noreply.github.com>

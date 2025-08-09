@@ -17,6 +17,10 @@ venv/
 .coverage
 .coverage.*
 coverage.xml
+htmlcov/
+.ruff_cache/
+.tox/
+.cache/
 
 # Type-checking
 .mypy_cache/
@@ -25,6 +29,7 @@ coverage.xml
 .idea/
 .vscode/
 *.swp
+.cursor/
 
 # System files
 .DS_Store
@@ -33,10 +38,21 @@ Thumbs.db
 # RPM build dirs
 rpmbuild/
 
+# C++ build artifacts
+*.so
+*.o
+*.a
+*.dylib
+*.dll
+libdnf5-plugin/dnf5-plugin/build/
+libdnf5-plugin/dnf5-plugin/redhat-linux-build/
+libdnf5-plugin/dnf5-plugin/CMakeCache.txt
+libdnf5-plugin/dnf5-plugin/CMakeFiles/
+libdnf5-plugin/dnf5-plugin/Makefile
+libdnf5-plugin/dnf5-plugin/cmake_install.cmake
+
 # Logs & Runtime data
 *.log
 *.pid
 *.pid.lock
-*.json
-*.toml
 *.tmp

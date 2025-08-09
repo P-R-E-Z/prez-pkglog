@@ -1,4 +1,3 @@
-# prez-pkglog - light cross-distro package logger engine
 import datetime as dt
 import json
 import pathlib
@@ -10,12 +9,10 @@ from contextlib import contextmanager
 
 from .config import Config
 
-# Placeholder for optional toml module
-toml: Any  # will be set by runtime import attempt below
+toml: Any
 
-# Attempt to import the optional `toml` dependency at runtime.
 try:
-    import toml as _toml_module  # type: ignore
+    import toml as _toml_module  # type: ignore[import-untyped]
 except ImportError:  # pragma: no cover
     _toml_module = None  # type: ignore[assignment]
 
@@ -23,14 +20,12 @@ toml = cast(Optional[Any], _toml_module)  # type: ignore[assignment]
 
 logger = logging.getLogger(__name__)
 
-# Cross-platform file-lock helpers
 if os.name == "posix":
     import fcntl  # type: ignore
 
     @contextmanager
     def _file_lock(path: pathlib.Path) -> Iterator[None]:
         """Context manager acquiring an exclusive advisory lock on *path*."""
-        # Open file handle (create if absent) strictly for locking
         with path.open("a") as lock_fp:
             try:
                 fcntl.flock(lock_fp, fcntl.LOCK_EX)
@@ -38,14 +33,13 @@ if os.name == "posix":
             finally:
                 fcntl.flock(lock_fp, fcntl.LOCK_UN)
 
-else:  # Windows – use msvcrt
+else:
     import msvcrt  # type: ignore
 
     @contextmanager
     def _file_lock(path: pathlib.Path) -> Iterator[None]:
         with path.open("a") as lock_fp:
             try:
-                # Lock entire file
                 msvcrt.locking(lock_fp.fileno(), msvcrt.LK_LOCK, 1)  # type: ignore[attr-defined]
                 yield
             finally:
@@ -63,12 +57,10 @@ class PackageLogger:
     def _setup_paths(self):
         """Setup paths based on scope"""
         if self.config.is_system_scope:
-            # System wide logging
             self.data_dir = pathlib.Path("/var/log/prez-pkglog")
             self.json_file = self.data_dir / "packages.json"
             self.toml_file = self.data_dir / "packages.toml"
         else:
-            # User logging
             self.data_dir = pathlib.Path.home() / ".local/share/prez-pkglog"
             self.json_file = self.data_dir / "packages.json"
             self.toml_file = self.data_dir / "packages.toml"
@@ -77,12 +69,9 @@ class PackageLogger:
         """Create directories if they don't exist"""
         self.data_dir.mkdir(parents=True, exist_ok=True)
 
-        # Set permissions based on scope
         if self.config.is_system_scope:
-            # System wide: read for all, write for root
             self.data_dir.chmod(0o755)
         else:
-            # User: user only
             self.data_dir.chmod(0o700)
 
         if not self.json_file.exists():
@@ -90,7 +79,6 @@ class PackageLogger:
         if not self.toml_file.exists():
             self.toml_file.write_text("")
 
-        # Set file permissions
         if self.config.is_system_scope:
             self.json_file.chmod(0o644)
             self.toml_file.chmod(0o644)
@@ -107,7 +95,6 @@ class PackageLogger:
         metadata: Optional[Dict] = None,
     ):
         """Log a package action"""
-        # Validation check for empty names
         if not name or not name.strip():
             logger.warning(f"Warning: Invalid package name: {name}")
             return
@@ -134,16 +121,13 @@ class PackageLogger:
         try:
             with self._thread_lock:
                 with _file_lock(self.json_file):
-                    # Read existing data
                     if self.json_file.exists() and self.json_file.stat().st_size > 0:
                         data = json.loads(self.json_file.read_text())
                     else:
                         data = []
 
-                    # Append new entry
                     data.append(entry)
 
-                    # Write back to file with memory efficient streaming for large files
                     if len(data) > 1000:
                         self._write_json_streaming(data)
                     else:
@@ -180,7 +164,7 @@ class PackageLogger:
                     with self.toml_file.open("a") as f:
                         if entry.get("removed"):
                             f.write("# --REMOVED--\n")
-                        f.write(toml.dumps({"package": entry}))
+                        f.write(toml.dumps(entry))
                         f.write("\n")
         except Exception as e:
             logger.error(f"Error writing to TOML log file: {e}")
@@ -197,18 +181,14 @@ class PackageLogger:
             results = data
 
             if name:
-                results = [
-                    e for e in results if name.lower() in e.get("name", "").lower()
-                ]
+                results = [e for e in results if name.lower() in e.get("name", "").lower()]
 
             if manager:
                 results = [e for e in results if e.get("manager") == manager]
 
             if since:
                 results = [
-                    e
-                    for e in results
-                    if dt.datetime.fromisoformat(e.get("date")).date() >= since
+                    e for e in results if dt.datetime.fromisoformat(e.get("date")).date() >= since
                 ]
 
             return results
@@ -221,7 +201,6 @@ class PackageLogger:
         try:
             data = json.loads(self.json_file.read_text())
 
-            # Use more efficient counting
             total = len(data)
             installed = sum(1 for e in data if not e.get("removed", False))
             removed = sum(1 for e in data if e.get("removed", False))

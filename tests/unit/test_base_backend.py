@@ -92,11 +92,7 @@ class ConcretePackageBackend(PackageBackend):
         return True
 
     def get_installed_packages(self):
-        return {
-            "test-package": PackageInfo(
-                name="test-package", version="1.0.0", installed=True
-            )
-        }
+        return {"test-package": PackageInfo(name="test-package", version="1.0.0", installed=True)}
 
     def register_transaction(self, transaction):
         return True

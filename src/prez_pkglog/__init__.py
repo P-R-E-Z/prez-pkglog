@@ -7,7 +7,6 @@ from typing import Any
 
 from .backends.base import PackageBackend
 
-# Dictionary to store registered backends
 _BACKENDS: dict[str, type[PackageBackend]] = {}
 
 
@@ -53,16 +52,12 @@ def detect_available_backends(
     return available
 
 
-# Package version
 try:
     __version__ = importlib.metadata.version("prez-pkglog")
 except importlib.metadata.PackageNotFoundError:
-    __version__ = "0.0.0"  # Development version
+    __version__ = "0.0.0"
 
-# Import built-in backends to register them
-# These imports are at the bottom to avoid circular imports
 from . import backends  # noqa: F401, E402
 
-# Register all dynamically discovered backends
 for backend_name, backend_class in backends.discovered_backends.items():
     register_backend(backend_name, backend_class)

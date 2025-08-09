@@ -5,36 +5,70 @@ on:
     tags:
       - "v*"
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   build-and-sign:
     runs-on: ubuntu-latest
     container:
       image: fedora:latest
-    env:
-      COPR_LOGIN: ${{ secrets.COPR_LOGIN }}
-      COPR_TOKEN: ${{ secrets.COPR_TOKEN }}
-      GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
-      GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
     steps:
-      - name: Install build tools
-        run: |
-          dnf -y install rpm-build rpmlint gnupg copr-cli git-core python3-pip
-          pip install build
-
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Import GPG key (for rpmsign)
-        if: env.GPG_PRIVATE_KEY != ''
+      - name: Install build tools
         run: |
-          echo "$GPG_PRIVATE_KEY" | base64 -d | gpg --batch --import -
-          echo "%_gpg_name Prez" >> ~/.rpmmacros
-          printf "%%_signature gpg\n%%_gpg_path ~/.gnupg\n%%_gpgbin $(which gpg)\n%%_gpg_passphrase $GPG_PASSPHRASE\n" >> ~/.rpmmacros
+          dnf -y install rpm-build rpmlint gnupg copr-cli git-core python3-pip
+          dnf -y install cmake gcc-c++ libdnf5-devel pkgconfig clang-tools-extra
+          pip install build ruff black mypy
+
+      - name: Install project dependencies
+        run: |
+          pip install -e .
+
+      - name: Run linting checks
+        run: |
+          ruff check src/
+          black --check src/
+          mypy src/
+
+      - name: Check C++ formatting
+        run: |
+          clang-format --dry-run --Werror libdnf5-plugin/dnf5-plugin/src/*.cpp || exit 1
+
+      - name: Run tests
+        run: |
+          pip install pytest pytest-cov
+          pytest -q
+
+      - name: Import GPG key (for rpmsign)
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          if [ -n "$GPG_PRIVATE_KEY" ]; then
+            echo "$GPG_PRIVATE_KEY" | base64 -d | gpg --batch --import -
+            echo "%_gpg_name Prez" >> ~/.rpmmacros
+            printf "%%_signature gpg\n%%_gpg_path ~/.gnupg\n%%_gpgbin $(which gpg)\n%%_gpg_passphrase $GPG_PASSPHRASE\n" >> ~/.rpmmacros
+          else
+            echo "GPG_PRIVATE_KEY not set, skipping GPG setup"
+          fi
 
       - name: Build source distribution
         run: |
           python3 -m build --sdist
           rpmlint -v prez-pkglog.spec || true
+
+      - name: Build C++ plugin
+        run: |
+          cd libdnf5-plugin/dnf5-plugin
+          cmake -B build
+          cmake --build build
+
+      - name: Create dist directory
+        run: mkdir -p dist
 
       - name: Build SRPM and RPM
         run: |
@@ -42,18 +76,35 @@ jobs:
           rpmbuild -bb prez-pkglog.spec --define "_sourcedir $(pwd)" --define "_rpmdir $(pwd)/dist" --define "_srcrpmdir $(pwd)/dist"
 
       - name: Run rpmlint on built RPMs
-        run: rpmlint dist/*.rpm || true
+        run: |
+          if ls dist/*.rpm 1> /dev/null 2>&1; then
+            rpmlint dist/*.rpm || true
+          else
+            echo "No RPM files found in dist directory"
+            exit 1
+          fi
 
       - name: Sign RPMs
-        if: env.GPG_PRIVATE_KEY != ''
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
         run: |
-          for rpm in dist/*.rpm; do
-            rpmsign --addsign "$rpm"
-          done
+          if [ -n "$GPG_PRIVATE_KEY" ]; then
+            for rpm in dist/*.rpm; do
+              rpmsign --addsign "$rpm"
+            done
+          else
+            echo "GPG_PRIVATE_KEY not set, skipping RPM signing"
+          fi
 
       - name: Upload to Copr
-        if: env.COPR_LOGIN != '' && env.COPR_TOKEN != ''
+        env:
+          COPR_LOGIN: ${{ secrets.COPR_LOGIN }}
+          COPR_TOKEN: ${{ secrets.COPR_TOKEN }}
         run: |
-          for srpm in dist/*.src.rpm; do
-            copr-cli build "$COPR_LOGIN/prez-pkglog" "$srpm"
-          done 
+          if [ -n "$COPR_LOGIN" ] && [ -n "$COPR_TOKEN" ]; then
+            for srpm in dist/*.src.rpm; do
+              copr-cli build "$COPR_LOGIN/prez-pkglog" "$srpm"
+            done
+          else
+            echo "COPR credentials not set, skipping upload"
+          fi 

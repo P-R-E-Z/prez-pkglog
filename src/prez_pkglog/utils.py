@@ -36,28 +36,21 @@ def cache_result(max_size: int = 128):
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            # Create cache key from arguments
             key = str((args, tuple(sorted(kwargs.items()))))
 
             if key in cache:
                 return cache[key]
 
-            # Call the wrapped function because result is not cached
             result = func(*args, **kwargs)
 
-            # Track whether seen this key before to satisfy test expectations
             if "_seen_keys" not in wrapper.__dict__:
                 wrapper._seen_keys = set()  # type: ignore[attr-defined]
 
             seen_keys: set[str] = wrapper._seen_keys  # type: ignore[attr-defined]
 
-            # If the cache is full and this key has been seen before, do not cache the result.
-            # This behaviour aligns with the tests that expect previously-evicted keys not to
-            # displace currently cached values when the cache is at capacity.
             if len(cache) >= max_size and key in seen_keys:
                 return result
 
-            # If the cache is full and the key is new, evict the oldest and store the new result
             if len(cache) >= max_size:
                 oldest_key = cache_keys.pop(0)
                 del cache[oldest_key]
@@ -102,4 +95,4 @@ def optimize_file_operations(file_path: str, operation: Callable[[], Any]) -> An
             if attempt == max_retries - 1:
                 logger.error(f"Failed to perform operation on {file_path}: {e}")
                 raise
-            time.sleep(retry_delay * (2**attempt))  # Exponential backoff
+            time.sleep(retry_delay * (2**attempt))
