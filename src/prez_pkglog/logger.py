@@ -2,7 +2,7 @@ import datetime as dt
 import json
 import pathlib
 import os
-from typing import Dict, Any, Optional, Iterator, cast
+from typing import Dict, Any, Optional, Iterator, cast, List
 import logging
 import threading
 from contextlib import contextmanager
@@ -50,7 +50,7 @@ else:
 class PackageLogger:
     def __init__(self, config: Optional[Config] = None):
         self.config = config or Config()
-        self._thread_lock = threading.Lock()
+        self._thread_lock = threading.RLock()
         self._setup_paths()
         self._ensure_directories()
 
@@ -99,22 +99,82 @@ class PackageLogger:
             logger.warning(f"Warning: Invalid package name: {name}")
             return
 
-        entry = {
+        now_iso = dt.datetime.now().isoformat(timespec="seconds")
+        base_entry = {
             "name": name.strip(),
             "manager": manager,
             "action": action,
-            "date": dt.datetime.now().isoformat(timespec="seconds"),
+            "date": now_iso,
             "removed": action == "remove",
             "scope": self.config.scope,
         }
 
         if version:
-            entry["version"] = version
+            base_entry["version"] = version
         if metadata:
-            entry["metadata"] = metadata
+            base_entry["metadata"] = metadata
 
-        self._append_json(entry)
-        self._append_toml(entry)
+        self._upsert_json_and_toml(base_entry)
+
+    def _upsert_json_and_toml(self, entry: Dict[str, Any]) -> None:
+        """Upsert the JSON log, updating prior install on removal; then rewrite TOML from JSON."""
+        try:
+            with self._thread_lock:
+                with _file_lock(self.json_file):
+                    if self.json_file.exists() and self.json_file.stat().st_size > 0:
+                        data: List[Dict[str, Any]] = json.loads(self.json_file.read_text())
+                    else:
+                        data = []
+
+                    if entry.get("removed"):
+                        # Find last matching install record to mark as removed
+                        idx_to_update: Optional[int] = None
+                        for i in range(len(data) - 1, -1, -1):
+                            rec = data[i]
+                            if (
+                                rec.get("name") == entry.get("name")
+                                and rec.get("manager") == entry.get("manager")
+                                and not rec.get("removed", False)
+                            ):
+                                idx_to_update = i
+                                break
+                        if idx_to_update is not None:
+                            data[idx_to_update]["removed"] = True
+                            data[idx_to_update]["action"] = "remove"
+                            data[idx_to_update]["date_removed"] = entry.get("date")
+                        else:
+                            data.append(entry)
+                    else:
+                        data.append(entry)
+
+                    # Write JSON back
+                    if len(data) > 1000:
+                        self._write_json_streaming(data)
+                    else:
+                        self._atomic_write(self.json_file, json.dumps(data, indent=2))
+
+                # Rewrite TOML based on the current JSON content to reflect updated flags
+                self._rewrite_toml_from_json_data(data)
+        except Exception as e:
+            logger.error(f"Error updating log files: {e}")
+
+    def _rewrite_toml_from_json_data(self, data: List[Dict[str, Any]]) -> None:
+        """Rewrite TOML file completely to match JSON state."""
+        if toml is None:
+            return
+        try:
+            with self._thread_lock:
+                with _file_lock(self.toml_file):
+                    lines: List[str] = []
+                    for rec in data:
+                        if rec.get("removed"):
+                            lines.append("# --REMOVED--\n")
+                        lines.append(toml.dumps(rec))
+                        lines.append("\n")
+                    content = "".join(lines)
+                    self._atomic_write(self.toml_file, content)
+        except Exception as e:
+            logger.error(f"Error writing to TOML log file: {e}")
 
     def _append_json(self, entry: Dict[str, Any]):
         """Append entry to JSON log file"""
