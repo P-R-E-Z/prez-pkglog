@@ -47,7 +47,7 @@ class Config:
 
     def _determine_config_file(self) -> Path:
         """Determine which config file to use.
-        
+
         Default to user config path; system scope is only used when explicitly saved by the user.
         """
         return self.user_config_file
