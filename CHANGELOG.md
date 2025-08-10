@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.5] - 2025-08-09
+
+### Fixed
+- Logger: removals now update the last install record (upsert) instead of appending a new line, creating accurate status counts
+- Logger: TOML file is regenerated from the JSON state after each update to keep both formats in sync
+- Concurrency: switched logger to a re-entrant lock (RLock) to avoid deadlocks during nested writes
+
+### Verify
+- After `dnf install/remove`, `/var/log/prez-pkglog/packages.json` should contain a single record per package, with `removed=true` after removal; `prez-pkglog status` will reflect correct totals
+
 ## [0.6.4] - 2025-08-09
 
 ### Note From Prez
