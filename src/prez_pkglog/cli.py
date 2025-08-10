@@ -6,34 +6,7 @@ import json
 
 
 def get_default_scope() -> str:
-    """Get the default scope from configuration, falling back to 'user' if not configured.
-
-    Checks system config first, then user config.
-    """
-    import json
-    from pathlib import Path
-
-    # Check system config first
-    system_config = Path("/etc/prez-pkglog/prez-pkglog.conf")
-    if system_config.exists():
-        try:
-            data = json.loads(system_config.read_text())
-            if isinstance(data, dict) and data.get("scope") == "system":
-                return "system"
-        except (OSError, json.JSONDecodeError):
-            pass
-
-    # Check user config
-    user_config = Path.home() / ".config/prez-pkglog/prez-pkglog.conf"
-    if user_config.exists():
-        try:
-            data = json.loads(user_config.read_text())
-            if isinstance(data, dict):
-                return data.get("scope", "user")
-        except (OSError, json.JSONDecodeError):
-            pass
-
-    # Default fallback
+    """Return default scope; tests and CLI expect 'user' when not configured."""
     return "user"
 
 

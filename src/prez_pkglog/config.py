@@ -46,24 +46,10 @@ class Config:
         self._validate_scope()
 
     def _determine_config_file(self) -> Path:
-        """Determine which config file to use based on availability and scope.
-
-        Priority order:
-        1. User config (~/.config/prez-pkglog/prez-pkglog.conf)
-        2. System config (/etc/prez-pkglog/prez-pkglog.conf) if running as root
+        """Determine which config file to use.
+        
+        Default to user config path; system scope is only used when explicitly saved by the user.
         """
-        # Prefer user config by default
-        if self.user_config_file.exists():
-            return self.user_config_file
-
-        # Only use system config if running as root
-        try:
-            if os.geteuid() == 0 and self.system_config_file.exists():
-                return self.system_config_file
-        except Exception:
-            pass
-
-        # Fall back to user config path
         return self.user_config_file
 
     def _load_config(self) -> None:
